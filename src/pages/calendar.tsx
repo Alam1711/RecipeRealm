@@ -1,101 +1,52 @@
-import React, {useEffect, useState} from 'react';
-import {db} from '../firebaseConfig';
 import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  Button,
+  Center,
+  Container,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  Flex,
+  HStack,
+  Image,
+  Input,
+  Select,
+  Spacer,
+  Text,
+  useDisclosure,
+  useToast,
+  VStack,
+} from "@chakra-ui/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import FullCalendar from "@fullcalendar/react";
+import {
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   query,
   updateDoc,
-  arrayUnion,
-  arrayRemove,
-} from 'firebase/firestore';
-import Navbar from '../components/Navbar';
-import {
-  Box,
-  Button,
-  Container,
-  useToast,
-  VStack,
-  Flex,
-  Stack,
-  Text,
-  useBreakpointValue,
-  Center,
-  Image,
-  HStack,
-  Input,
-  Drawer,
-  DrawerBody,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
-  useDisclosure,
-  Select,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionIcon,
-  AccordionPanel,
-  Spacer,
-} from '@chakra-ui/react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
   useCollectionData,
   useDocumentData,
-} from 'react-firebase-hooks/firestore';
-import {AiFillPrinter} from 'react-icons/ai';
-import {Link} from 'react-router-dom';
-
-/**
- * Object for nutrition information to store in data base
- */
-type nutrition = {
-  calories: number;
-  total_fat: number;
-  saturated_fat: number;
-  cholesterol: number;
-  sodium: number;
-  total_carbohydrate: number;
-  dietary_fiber: number;
-  sugars: number;
-  protein: number;
-};
-
-/**
- * Object for Recipe information to store in data base
- */
-type Recipe = {
-  recipe_name: string;
-  servings: string;
-  allergens: string;
-  cooking_applications: string;
-  cooking_time: string;
-  cost_per_serving: string;
-  difficulty: string;
-  posted: boolean;
-  ingredients: string[];
-  instructions: string;
-  nutrients: nutrition;
-  pic: string;
-};
-/**
- * Object for event information to store in data base
- */
-type event = {
-  recipe: Recipe;
-  date: string;
-  title: string;
-};
-
-/**
- * Function that gets the index of a recipe in the respective user's recipe list/array
- * @param recipes the list of recipes saved by that user
- * @param recipe_name the name of a singular recipe from the recipes list
- * @returns 
- */
+} from "react-firebase-hooks/firestore";
+import { AiFillPrinter } from "react-icons/ai";
+import { Link } from "react-router-dom";
+import { db } from "../authentication/firebaseConfig";
+import Navbar from "../components/HeaderFooters/Navbar";
+import { Recipe, event, Ingredient } from "../components/InterfaceTypes/types";
 function getRecipeIndex(recipes: any[], recipe_name: string): number {
   for (let i = 0; i < recipes.length; i++) {
     if (recipes[i]?.data.recipe_name.localeCompare(recipe_name) === 0) {
@@ -105,59 +56,33 @@ function getRecipeIndex(recipes: any[], recipe_name: string): number {
   return -1;
 }
 
-/**
- * The main React Calendar page object. Displays all features for this page like Navbar, 
- * calendar, schedule button, scheduled meals, and meals scheduled on specific date.
- * @returns React CalendarPage
- */
 const CalendarPage: React.FC = () => {
   const toast = useToast();
-  const email = JSON.parse(localStorage.getItem('EMAIL') as string);
+  const email = JSON.parse(localStorage.getItem("EMAIL") as string);
   const savedRecipesQuery = query(
-    collection(db, 'users/' + email + '/SavedRecipes'),
+    collection(db, "users/" + email + "/SavedRecipes")
   );
 
-  /** Listener for Firebase to load Saved Recipes data to the variable savedRecipes */
-  const [savedRecipes, savedRecipesLoading, savedRecipesError] =
-    useCollectionData(savedRecipesQuery);
+  const [savedRecipes] = useCollectionData(savedRecipesQuery);
+  const recipesQuery = query(collection(db, "users/" + email + "/Recipes"));
 
-  /** Variable that stores a query from Firestore of recipe data from specific user */
-  const recipesQuery = query(collection(db, 'users/' + email + '/Recipes'));
-  /** Listener for Firebase to load Recipes(self created recipes) data to the variable recipes */
-  const [recipes, recipesLoading, recipesError] =
-    useCollectionData(recipesQuery);
-  /** Retrieves user profile information from Firestore to variable named profile using useDocumentData hook */
-  const [profile, profileLoading, profileError] = useDocumentData(
-    doc(db, 'users/', email),
-  );
-  /** React state hook for managing an array of date-related events. */
+  const [recipes] = useCollectionData(recipesQuery);
+  const [profile] = useDocumentData(doc(db, "users/", email));
   const [dateEvents, setDateEvents] = useState<any>([]);
-  /** React state hook for managing dates */
-  const [date, setDate] = useState('');
-  /** React hook that manages recipe names */
+  const [date, setDate] = useState("");
   const [recipeName, setRecipeName] = useState<any>();
-  /** React hook that manages events */
-  const [events, setEvents] = useState<any>([]);
-  /** React hook that stores the selected date */
-  const [dateSelected, setDateSelected] = useState('');
-  /** Loads the user's event informatio on mount */
+  const [dateSelected, setDateSelected] = useState("");
   useEffect(() => {
-    var tempEvents: Recipe[] = [];
-    for (let i = 0; i < profile?.events.length; i++) {
-      if (profile?.events[i].date?.includes(dateSelected)) {
-        tempEvents.push(profile?.events[i].recipe);
-      }
+    if (profile?.events) {
+      const tempEvents: Recipe[] = profile.events
+        .filter((event: any) => event.date?.includes(dateSelected))
+        .map((event: any) => event.recipe);
+      setDateEvents(tempEvents);
     }
-    setDateEvents(tempEvents);
-  }, [profile]);
+  }, [profile, dateSelected]);
 
-  /**
-   * Function that returns the size of the title for a recipe name
-   * @param title the title of the recipe
-   * @returns length of title
-   */
   function titleSize(title: string) {
-    return 34 - title.length * 0.2 + 'px';
+    return 34 - title.length * 0.2 + "px";
   }
   /**
    * Handles the change of name for a recipe
@@ -177,7 +102,7 @@ const CalendarPage: React.FC = () => {
     setDate(targ);
   };
   /**
-   * Handles the the information being submitted when user is setting the date, time, and recipe 
+   * Handles the the information being submitted when user is setting the date, time, and recipe
    * being scheduled to the data base
    * @param recipe_name name of the recipe being saved
    * @param date the date and time that the meal is being scheduled on
@@ -185,12 +110,12 @@ const CalendarPage: React.FC = () => {
    */
   const handleSubmit = async (recipe_name: string, date: string) => {
     if (recipes && savedRecipes) {
-      if (date === '') {
+      if (date === "") {
         toast({
           //
-          title: 'No Time',
-          description: 'Please choose a time for your recipe',
-          status: 'error',
+          title: "No Time",
+          description: "Please choose a time for your recipe",
+          status: "error",
           duration: 3000,
           isClosable: true,
         });
@@ -204,7 +129,7 @@ const CalendarPage: React.FC = () => {
           date: date,
           title: recipe_name,
         };
-        const docRef = doc(db, 'users', email);
+        const docRef = doc(db, "users", email);
         await updateDoc(docRef, {
           events: arrayUnion(newEvent),
         });
@@ -214,27 +139,21 @@ const CalendarPage: React.FC = () => {
           date: date,
           title: recipe_name,
         };
-        const docRef = doc(db, 'users', email);
+        const docRef = doc(db, "users", email);
         await updateDoc(docRef, {
           events: arrayUnion(newEvent),
         });
       }
       toast({
         //
-        title: 'Recipe Created',
-        description: 'Recipe added to your calendar.',
-        status: 'success',
+        title: "Recipe Created",
+        description: "Recipe added to your calendar.",
+        status: "success",
         duration: 3000,
         isClosable: true,
       });
     }
   };
-
-  /**
-   * Method that dispalys the meals from the selected day on the right side of
-   * the window. Default display day is current day.
-   * @returns displays the meals information in a list layout from the selected day on the calendar
-   */
   function displayMeals() {
     return (
       <VStack spacing={10}>
@@ -243,7 +162,7 @@ const CalendarPage: React.FC = () => {
           {dateEvents &&
             dateEvents.map((recipe: Recipe) => (
               <Container
-                boxShadow={'2xl'}
+                boxShadow={"2xl"}
                 maxW="md"
                 borderRadius="lg"
                 overflow="hidden"
@@ -254,7 +173,8 @@ const CalendarPage: React.FC = () => {
                 rounded="md"
                 padding={4}
                 margin={4}
-                shadow={'dark-lg'}>
+                shadow={"dark-lg"}
+              >
                 <VStack align="2x1">
                   <Center>
                     <Image
@@ -276,12 +196,14 @@ const CalendarPage: React.FC = () => {
                     as="h3"
                     size="lg"
                     color="black"
-                    padding={1}>
+                    padding={1}
+                  >
                     <Center>
                       <Text
                         as="b"
                         fontSize={titleSize(recipe.recipe_name)}
-                        textColor="white">
+                        textColor="white"
+                      >
                         {
                           // name of the recipe
                           recipe.recipe_name
@@ -295,16 +217,20 @@ const CalendarPage: React.FC = () => {
                     padding="4"
                     bg="white"
                     color="black"
-                    maxW="container.sm">
+                    maxW="container.sm"
+                  >
                     {/* displaying recipe data */}
                     <Text noOfLines={1}>Difficulty: {recipe.difficulty}</Text>
-                    <Text noOfLines={1}>Time: {recipe.cooking_time}</Text>
+                    <Text noOfLines={1}>
+                      Time: {recipe.cooking_time.format("HH:mm")}
+                    </Text>
                     <Text noOfLines={1}>Servings: {recipe.servings}</Text>
                     <Text noOfLines={1}>
                       Cost Per Serving: {recipe.cost_per_serving}
                     </Text>
                     <Text noOfLines={1}>
-                      Cooking Applications: {recipe.cooking_applications}
+                      Cooking Applications:{" "}
+                      {recipe.cooking_applications.join(", ")}
                     </Text>
                     <Text noOfLines={1}>Allergens: {recipe.allergens}</Text>
                   </Box>
@@ -325,14 +251,14 @@ const CalendarPage: React.FC = () => {
                         <Box padding="4" color="black" maxW="container.sm">
                           {/* each accordion panel contains:  */}
                           <Text noOfLines={1} textColor="white">
-                            Calories: {recipe.nutrients.calories.toFixed(2)}{' '}
+                            Calories: {recipe.nutrients.calories.toFixed(2)}{" "}
                             kCal
                           </Text>
                           <Text noOfLines={1} textColor="white">
                             Protein: {recipe.nutrients.protein.toFixed(2)}g
                           </Text>
                           <Text noOfLines={1} textColor="white">
-                            Carbs:{' '}
+                            Carbs:{" "}
                             {recipe.nutrients.total_carbohydrate.toFixed(2)}g
                           </Text>
                           <Text noOfLines={1} textColor="white">
@@ -342,11 +268,11 @@ const CalendarPage: React.FC = () => {
                             Fat: {recipe.nutrients.total_fat.toFixed(2)}g
                           </Text>
                           <Text noOfLines={1} textColor="white">
-                            Saturated Fat:{' '}
+                            Saturated Fat:{" "}
                             {recipe.nutrients.saturated_fat.toFixed(2)}g
                           </Text>
                           <Text noOfLines={1} textColor="white">
-                            Cholesterol:{' '}
+                            Cholesterol:{" "}
                             {recipe.nutrients.cholesterol.toFixed(2)}g
                           </Text>
                           <Text noOfLines={1} textColor="white">
@@ -374,12 +300,12 @@ const CalendarPage: React.FC = () => {
                       </h2>
                       <AccordionPanel pb={4}>
                         {recipe.ingredients.map(
-                          (ingredient: string, index: number) => (
+                          (ingredient: Ingredient, index: number) => (
                             <Text key={index} textColor="whiteAlpha.900">
-                              {' '}
-                              <li> {ingredient}</li>
+                              {" "}
+                              <li> {ingredient.name}</li>
                             </Text>
-                          ),
+                          )
                         )}
                       </AccordionPanel>
                     </AccordionItem>
@@ -421,10 +347,11 @@ const CalendarPage: React.FC = () => {
                       maxW="container.sm"
                       onClick={() => {
                         window.localStorage.setItem(
-                          'VIEWRECIPE',
-                          JSON.stringify(recipe),
+                          "VIEWRECIPE",
+                          JSON.stringify(recipe)
                         );
-                      }}>
+                      }}
+                    >
                       <AiFillPrinter />
                       <Text marginLeft={2}>Print Recipe</Text>
                     </Button>
@@ -443,17 +370,18 @@ const CalendarPage: React.FC = () => {
                         for (let i = 0; i < profile?.events.length; i++) {
                           if (
                             profile?.events[i].date.includes(dateSelected) &&
-                            profile?.events[i].title == recipe.recipe_name
+                            profile?.events[i].title === recipe.recipe_name
                           ) {
                             console.log(dateSelected);
                             console.log(profile?.events[i]);
                             console.log(profile?.events[i].title);
-                            updateDoc(doc(db, 'users/', email), {
+                            updateDoc(doc(db, "users/", email), {
                               events: arrayRemove(profile?.events[i]),
                             });
                           }
                         }
-                      }}>
+                      }}
+                    >
                       <Text>De-schedule</Text>
                     </Button>
                   </Flex>
@@ -471,63 +399,57 @@ const CalendarPage: React.FC = () => {
    * @returns displays the drawer component that allows the user to schedule a meal on a select date
    */
   function ScheduleRecipe() {
-    const {isOpen, onOpen, onClose} = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (
       <>
         {/* Button that displays the drawer for scheduling meal on a select date */}
-        <Button
-          alignSelf={'right'}
-          colorScheme="teal"
-          onClick={onOpen}>
+        <Button alignSelf={"right"} colorScheme="teal" onClick={onOpen}>
           Schedule Recipe
         </Button>
         {/* Drawer component that displays input boxes and buttons that user interacts with to schedule meal on select date */}
-        <Drawer
-          isOpen={isOpen}
-          placement="right"
-          onClose={onClose}
-          size={'md'}
-        >
+        <Drawer isOpen={isOpen} placement="right" onClose={onClose} size={"md"}>
           <DrawerOverlay />
           <DrawerContent>
             <DrawerCloseButton />
             <DrawerHeader
-              bg={'teal'}
-              paddingTop={'40px'}
-              paddingBottom={'40px'}
-              fontSize={'30px'}
-              textAlign={'center'}
-              color={'white'}>
+              bg={"teal"}
+              paddingTop={"40px"}
+              paddingBottom={"40px"}
+              fontSize={"30px"}
+              textAlign={"center"}
+              color={"white"}
+            >
               Choose when to schedule your meal!
             </DrawerHeader>
 
-            <DrawerBody paddingTop={'20px'}>
-              <Text padding={'20px'} fontSize={'20px'} fontWeight={'600'}>
+            <DrawerBody paddingTop={"20px"}>
+              <Text padding={"20px"} fontSize={"20px"} fontWeight={"600"}>
                 Enter a date: <br />
                 (must include date and time)
               </Text>
               {/* Date and time input */}
               <Input
                 type="datetime-local"
-                outlineColor={'teal'}
+                outlineColor={"teal"}
                 placeholder="Select Date and Time"
                 onChange={handleDateChange}
               />
-              <Text padding={'25px'} fontSize={'20px'} fontWeight={'600'}>
+              <Text padding={"25px"} fontSize={"20px"} fontWeight={"600"}>
                 Choose the recipe:
               </Text>
               {/* Select meal input box */}
               <Select
-                size={'lg'}
+                size={"lg"}
                 value={recipeName}
-                outlineColor={'teal'}
+                outlineColor={"teal"}
                 placeholder="Click to select..."
-                onChange={handleRecipeChange}>
-                {recipes?.map(recipe => (
+                onChange={handleRecipeChange}
+              >
+                {recipes?.map((recipe) => (
                   <option>{recipe?.data.recipe_name}</option>
                 ))}
-                {savedRecipes?.map(recipe => (
+                {savedRecipes?.map((recipe) => (
                   <option>{recipe?.data.recipe_name}</option>
                 ))}
               </Select>
@@ -541,7 +463,8 @@ const CalendarPage: React.FC = () => {
               {/* Schedule confirmation button */}
               <Button
                 colorScheme="green"
-                onClick={() => handleSubmit(recipeName, date)}>
+                onClick={() => handleSubmit(recipeName, date)}
+              >
                 Schedule
               </Button>
             </DrawerFooter>
@@ -553,28 +476,11 @@ const CalendarPage: React.FC = () => {
 
   return (
     <>
-      <Navbar />
-      <Flex
-        w={'full'}
-        h={'100'}
-        backgroundSize={'cover'}
-        backgroundPosition={'center center'}
-        alignContent={'flex-end'}
-        backgroundColor="rgba(0, 128, 128, 0.7)">
-        <VStack
-          w={'full'}
-          px={useBreakpointValue({base: 4, md: 8})}
-          backgroundColor="rgba(0, 128, 128, 0.7)">
-          <Stack maxW={'2xl'} spacing={6}>
-            <Text textAlign="center" fontSize="6xl" as="b" textColor="white">
-              Calendar
-            </Text>
-          </Stack>
-        </VStack>
-      </Flex>
-      <HStack height={'auto'} padding={'25px'}>
-        <VStack w={'50%'} align={'left'}>
-          <Container w={'750px'}>
+      <Navbar pageHeader="Calendar" />
+
+      <HStack height={"auto"} padding={"25px"}>
+        <VStack w={"50%"} align={"left"}>
+          <Container w={"750px"}>
             {/* Calendar component called FullCalendar. Built in calendar UI with props that allow customization */}
             <FullCalendar
               plugins={[interactionPlugin, dayGridPlugin]}
@@ -586,15 +492,16 @@ const CalendarPage: React.FC = () => {
                 // Function to handle date clicking
                 const selectedDate = info.dateStr;
                 var tempEvents: Recipe[] = [];
-                for (let i = 0; i < profile?.events.length; i++) {
-                  if (profile?.events[i].date.includes(info.dateStr)) {
-                    tempEvents.push(profile?.events[i].recipe);
-                  }
+                if (profile?.events) {
+                  tempEvents = profile.events
+                    .filter((event: any) => event.date.includes(selectedDate))
+                    .map((event: any) => event.recipe);
                 }
+
                 setDateSelected(selectedDate);
                 setDateEvents(tempEvents);
               }}
-              // prop that restrict multi select of days 
+              // prop that restrict multi select of days
               selectAllow={function (selectInfo) {
                 var startDate = selectInfo.start.getDate();
                 var endDate;
@@ -610,7 +517,7 @@ const CalendarPage: React.FC = () => {
                 } else {
                   endMonth = selectInfo.end.getMonth();
                 }
-                if (startDate == endDate && startMonth == endMonth) {
+                if (startDate === endDate && startMonth === endMonth) {
                   return true;
                 } else {
                   return false;
@@ -628,22 +535,25 @@ const CalendarPage: React.FC = () => {
         </VStack>
         <Container
           id="MealPlanInfo"
-          border={'solid'}
-          borderColor={'teal'}
-          height={'800px'}
+          border={"solid"}
+          borderColor={"teal"}
+          height={"800px"}
           maxH="680px"
-          overflowY={'scroll'}
-          w={'1000px'}>
-          {/* Checks if a date is selected to display a message for the user to select a day if user hasn't yet, else
-          * it displays meal info from displayMeals() function          
-          */
-          dateSelected == '' ? (
-            <Text paddingTop={'200'} paddingLeft={'75'}>
-              Select a day to view the meals scheduled
-            </Text>
-          ) : (
-            displayMeals()
-          )}
+          overflowY={"scroll"}
+          w={"1000px"}
+        >
+          {
+            /* Checks if a date is selected to display a message for the user to select a day if user hasn't yet, else
+             * it displays meal info from displayMeals() function
+             */
+            dateSelected === "" ? (
+              <Text paddingTop={"200"} paddingLeft={"75"}>
+                Select a day to view the meals scheduled
+              </Text>
+            ) : (
+              displayMeals()
+            )
+          }
         </Container>
       </HStack>
     </>

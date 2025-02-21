@@ -1,71 +1,68 @@
-import React, {useState, useEffect} from 'react';
-import {db} from '../../firebaseConfig';
-import {AiFillPrinter} from 'react-icons/ai';
 import {
-  collection,
-  doc,
-  getDocs,
-  where,
-  query,
-  onSnapshot,
-  arrayRemove,
-  arrayUnion,
-  updateDoc,
-} from 'firebase/firestore';
-import Navbar from '../../components/Navbar';
-import {
-  Box,
-  Stack,
-  Avatar,
-  Text,
-  Button,
-  VStack,
-  Container,
-  Flex,
-  SimpleGrid,
-  HStack,
-  Heading,
-  Center,
-  Image,
   Accordion,
   AccordionButton,
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  useToast,
-  TabPanel,
+  Avatar,
+  Box,
+  Button,
+  Center,
+  Container,
+  Flex,
+  HStack,
+  Heading,
+  Image,
+  SimpleGrid,
+  Stack,
   Tab,
-  Tabs,
   TabList,
+  TabPanel,
   TabPanels,
+  Tabs,
+  Text,
+  VStack,
   useBreakpointValue,
-} from '@chakra-ui/react';
-import {Link} from 'react-router-dom';
-import {FiBookOpen} from 'react-icons/fi';
-import {useDocumentData} from 'react-firebase-hooks/firestore';
+  useToast,
+} from "@chakra-ui/react";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { useDocumentData } from "react-firebase-hooks/firestore";
+import { AiFillPrinter } from "react-icons/ai";
+import { FiBookOpen } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { db } from "../../authentication/firebaseConfig";
+import Navbar from "../../components/HeaderFooters/Navbar";
 
 //Holds Component
 const FriendProfile: React.FC = () => {
   //Necessary Hooks
   const toast = useToast();
-  const [following, setFollowing] = useState<any[]>([]);
+
   const [recipes, setRecipes] = useState<any[]>([]);
   const [numPosts, setNumPosts] = useState(0);
-  const [numFriends, setNumFriends] = useState(0);
   const [profile, setProfile] = useState<any>();
-  const [email, setEmail] = useState('');
-  const userEmail = JSON.parse(window.localStorage.getItem('EMAIL') as string);
+  const [email, setEmail] = useState("");
+  const userEmail = JSON.parse(window.localStorage.getItem("EMAIL") as string);
   // get the current user's profile and create a listener to the db
-  const [userProfile, userProfileLoading, userProfileError] = useDocumentData(
-    doc(db, 'users/', userEmail),
-  );
+  const [userProfile] = useDocumentData(doc(db, "users/", userEmail));
   //Fetch Data on Open
   useEffect(() => {
     async function getEmail() {
-      const username = JSON.parse(localStorage.getItem('USERNAME') as string);
+      const username = JSON.parse(localStorage.getItem("USERNAME") as string);
       console.log(username);
-      const queryUsers = await getDocs(collection(db, 'users'));
-      const users: any = queryUsers.docs.map(doc => doc.data());
+      const queryUsers = await getDocs(collection(db, "users"));
+      const users: any = queryUsers.docs.map((doc) => doc.data());
       for (let i = 0; i < users.length; i++) {
         if (users[i].username.localeCompare(username) === 0) {
           setEmail(users[i].email);
@@ -78,23 +75,23 @@ const FriendProfile: React.FC = () => {
   useEffect(() => {
     if (email) {
       const recipesQuery = query(
-        collection(db, 'users/' + email + '/Recipes'),
-        where('posted', '==', true),
+        collection(db, "users/" + email + "/Recipes"),
+        where("posted", "==", true)
       );
-      const recipesSnapshot = onSnapshot(recipesQuery, querySnapshot => {
+      const recipesSnapshot = onSnapshot(recipesQuery, (querySnapshot) => {
         const temp: any[] = [];
         var tempNum = 0;
-        querySnapshot.forEach(doc => {
+        querySnapshot.forEach((doc) => {
           if (doc.data().posted === true) {
             tempNum++;
           }
           temp.push(doc.data());
         });
-        console.log('recipes');
+        console.log("recipes");
         setNumPosts(tempNum);
         setRecipes(temp);
       });
-      const profileSnapshot = onSnapshot(doc(db, 'users/', email), doc => {
+      const profileSnapshot = onSnapshot(doc(db, "users/", email), (doc) => {
         setProfile(doc.data());
       });
     }
@@ -102,7 +99,7 @@ const FriendProfile: React.FC = () => {
 
   //Functions to adjust Title Size
   function titleSize(title: string) {
-    return 34 - title.length * 0.2 + 'px';
+    return 34 - title.length * 0.2 + "px";
   }
 
   // function to check if someone is in the current user's following list
@@ -124,13 +121,13 @@ const FriendProfile: React.FC = () => {
   async function addFollowing() {
     // if you don't follow them...
     if (!isFollowing()) {
-      const getUser = doc(db, 'users/', userEmail);
+      const getUser = doc(db, "users/", userEmail);
       // update the user's doc, append their email to the end
       await updateDoc(getUser, {
         following: arrayUnion(email),
       });
     } else {
-      console.log('Already following');
+      console.log("Already following");
     }
   }
 
@@ -138,7 +135,7 @@ const FriendProfile: React.FC = () => {
   async function removeFollowing() {
     // if you DO follow them...
     if (isFollowing()) {
-      const getUser = doc(db, 'users/', userEmail);
+      const getUser = doc(db, "users/", userEmail);
       // remove their name from your list
       await updateDoc(getUser, {
         following: arrayRemove(email),
@@ -150,14 +147,15 @@ const FriendProfile: React.FC = () => {
     <>
       <Navbar />
       <Flex
-        w={'full'}
-        h={'100'}
-        backgroundSize={'cover'}
-        backgroundPosition={'center center'}
-        alignContent={'flex-end'}
-        backgroundColor="rgba(0, 128, 128)">
-        <VStack w={'full'} px={useBreakpointValue({base: 4, md: 8})}>
-          <Stack minW={'2xl'} spacing={6}>
+        w={"full"}
+        h={"100"}
+        backgroundSize={"cover"}
+        backgroundPosition={"center center"}
+        alignContent={"flex-end"}
+        backgroundColor="rgba(0, 128, 128)"
+      >
+        <VStack w={"full"} px={useBreakpointValue({ base: 4, md: 8 })}>
+          <Stack minW={"2xl"} spacing={6}>
             <Text textAlign="center" fontSize="6xl" as="b" color="white">
               @
               {
@@ -169,13 +167,14 @@ const FriendProfile: React.FC = () => {
         </VStack>
       </Flex>
       <Container
-        maxW={'10xl'}
+        maxW={"10xl"}
         py={12}
         bg=""
         alignContent="center"
         display="flex"
         justifyContent="center"
-        alignItems="center">
+        alignItems="center"
+      >
         <HStack spacing="65px">
           <VStack>
             <HStack spacing={4}>
@@ -189,7 +188,7 @@ const FriendProfile: React.FC = () => {
                   // display the current user's profile picture
                   profile?.profilePic
                 }
-              />{' '}
+              />{" "}
               <VStack marginLeft={10}>
                 <Heading>
                   {
@@ -203,7 +202,7 @@ const FriendProfile: React.FC = () => {
                     {
                       // display the number of recipes
                       recipes?.length
-                    }{' '}
+                    }{" "}
                     recipe
                   </Text>
                 ) : (
@@ -222,7 +221,7 @@ const FriendProfile: React.FC = () => {
                   <Text fontSize={18}>{profile?.following.length} friends</Text>
                 )}
 
-                <Text color={'black'} fontSize={'lg'} maxWidth={500}>
+                <Text color={"black"} fontSize={"lg"} maxWidth={500}>
                   {
                     // display the bio of the user
                     profile?.biography
@@ -241,64 +240,66 @@ const FriendProfile: React.FC = () => {
                 isFollowing() ? (
                   <Button
                     flex={1}
-                    fontSize={'sm'}
+                    fontSize={"sm"}
                     isDisabled={myProfile()}
-                    rounded={'full'}
-                    bg={'red.400'}
-                    color={'white'}
-                    width={'600px'}
+                    rounded={"full"}
+                    bg={"red.400"}
+                    color={"white"}
+                    width={"600px"}
                     boxShadow={
-                      '0px 1px 25px -5px rgb(66 153 225 / 48%), 0 10px 10px -5px rgb(66 153 225 / 43%)'
+                      "0px 1px 25px -5px rgb(66 153 225 / 48%), 0 10px 10px -5px rgb(66 153 225 / 43%)"
                     }
                     _hover={{
-                      bg: 'red.500',
+                      bg: "red.500",
                     }}
                     _focus={{
-                      bg: 'red.500',
+                      bg: "red.500",
                     }}
                     onClick={() => {
                       // if you follow this person,
                       // unfollow them on click
                       toast({
-                        title: 'Unfollowed',
-                        description: 'Removed from your friends',
-                        status: 'error',
+                        title: "Unfollowed",
+                        description: "Removed from your friends",
+                        status: "error",
                         duration: 3000,
                         isClosable: true,
                       });
                       removeFollowing();
-                    }}>
+                    }}
+                  >
                     Unfollow
                   </Button>
                 ) : (
                   <Button
                     flex={1}
-                    fontSize={'sm'}
+                    fontSize={"sm"}
                     isDisabled={myProfile()}
-                    rounded={'full'}
-                    bg={'green.400'}
-                    width={'600px'}
-                    color={'white'}
+                    rounded={"full"}
+                    bg={"green.400"}
+                    width={"600px"}
+                    color={"white"}
                     boxShadow={
-                      '0px 1px 25px -5px rgb(66 153 225 / 48%), 0 10px 10px -5px rgb(66 153 225 / 43%)'
+                      "0px 1px 25px -5px rgb(66 153 225 / 48%), 0 10px 10px -5px rgb(66 153 225 / 43%)"
                     }
                     _hover={{
-                      bg: 'green.500',
+                      bg: "green.500",
                     }}
                     _focus={{
-                      bg: 'green.500',
+                      bg: "green.500",
                     }}
                     onClick={() => {
                       // add this person to your following list
                       addFollowing();
                       toast({
-                        title: 'Followed',
-                        description: 'Added to your friends',
-                        status: 'success',
+                        title: "Followed",
+                        description: "Added to your friends",
+                        status: "success",
                         duration: 3000,
                         isClosable: true,
                       });
-                    }}>
+                    }}
+                  >
                     Follow
                   </Button>
                 )
@@ -312,10 +313,11 @@ const FriendProfile: React.FC = () => {
         {/* tabs for different data */}
         <TabList
           sx={{
-            justifyContent: 'center',
-          }}>
+            justifyContent: "center",
+          }}
+        >
           <Tab>
-            {' '}
+            {" "}
             <FiBookOpen />
             <Text marginLeft={2}>Recipe Book</Text>
           </Tab>
@@ -330,7 +332,8 @@ const FriendProfile: React.FC = () => {
                   alignContent="center"
                   display="flex"
                   justifyContent="center"
-                  alignItems="center">
+                  alignItems="center"
+                >
                   {
                     // if they have no recipes
                     recipes?.length === 0 ? (
@@ -338,7 +341,8 @@ const FriendProfile: React.FC = () => {
                         <Heading
                           alignSelf="center"
                           minH="350"
-                          textAlign="center">
+                          textAlign="center"
+                        >
                           You have 0 recipes
                         </Heading>
                       </Center>
@@ -346,9 +350,9 @@ const FriendProfile: React.FC = () => {
                       // when recipes loads,
                       recipes &&
                       // map each individual recipe
-                      recipes.map(recipe => (
+                      recipes.map((recipe) => (
                         <Container
-                          boxShadow={'2xl'}
+                          boxShadow={"2xl"}
                           width="md"
                           borderRadius="lg"
                           overflow="hidden"
@@ -362,7 +366,8 @@ const FriendProfile: React.FC = () => {
                           margin={4}
                           marginRight={10}
                           marginLeft={10}
-                          shadow={'dark-lg'}>
+                          shadow={"dark-lg"}
+                        >
                           <VStack align="2x1">
                             <Center>
                               <Image
@@ -384,13 +389,15 @@ const FriendProfile: React.FC = () => {
                               as="h3"
                               size="lg"
                               color="black"
-                              padding={1}>
+                              padding={1}
+                            >
                               <Center>
                                 <Text
                                   as="b"
                                   //Show size of Title
                                   fontSize={titleSize(recipe.data.recipe_name)}
-                                  textColor="white">
+                                  textColor="white"
+                                >
                                   {
                                     // name of the recipe
                                     recipe.data.recipe_name
@@ -404,7 +411,8 @@ const FriendProfile: React.FC = () => {
                               padding="4"
                               bg="white"
                               color="black"
-                              maxW="container.sm">
+                              maxW="container.sm"
+                            >
                               {/* displaying recipe data */}
                               <Text noOfLines={1}>
                                 Difficulty: {recipe.data.difficulty}
@@ -419,7 +427,7 @@ const FriendProfile: React.FC = () => {
                                 Cost Per Serving: {recipe.data.cost_per_serving}
                               </Text>
                               <Text noOfLines={1}>
-                                Cooking Applications:{' '}
+                                Cooking Applications:{" "}
                                 {recipe.data.cooking_applications}
                               </Text>
                               <Text noOfLines={1}>
@@ -443,60 +451,61 @@ const FriendProfile: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
+                                    maxW="container.sm"
+                                  >
                                     {/* each accordion panel contains:  */}
                                     <Text noOfLines={1} textColor="white">
-                                      Calories:{' '}
+                                      Calories:{" "}
                                       {recipe.data.nutrients.calories.toFixed(
-                                        2,
-                                      )}{' '}
+                                        2
+                                      )}{" "}
                                       kCal
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Protein:{' '}
+                                      Protein:{" "}
                                       {recipe.data.nutrients.protein.toFixed(2)}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Carbs:{' '}
+                                      Carbs:{" "}
                                       {recipe.data.nutrients.total_carbohydrate.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sugar:{' '}
+                                      Sugar:{" "}
                                       {recipe.data.nutrients.sugars.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fat:{' '}
+                                      Fat:{" "}
                                       {recipe.data.nutrients.total_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Saturated Fat:{' '}
+                                      Saturated Fat:{" "}
                                       {recipe.data.nutrients.saturated_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Cholesterol:{' '}
+                                      Cholesterol:{" "}
                                       {recipe.data.nutrients.cholesterol.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sodium:{' '}
+                                      Sodium:{" "}
                                       {recipe.data.nutrients.sodium.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fiber:{' '}
+                                      Fiber:{" "}
                                       {recipe.data.nutrients.dietary_fiber.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
@@ -522,11 +531,12 @@ const FriendProfile: React.FC = () => {
                                     (ingredient: string, index: number) => (
                                       <Text
                                         key={index}
-                                        textColor="whiteAlpha.900">
-                                        {' '}
+                                        textColor="whiteAlpha.900"
+                                      >
+                                        {" "}
                                         <li> {ingredient}</li>
                                       </Text>
-                                    ),
+                                    )
                                   )}
                                 </AccordionPanel>
                               </AccordionItem>
@@ -548,7 +558,8 @@ const FriendProfile: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
+                                    maxW="container.sm"
+                                  >
                                     <Text textColor="white">
                                       {/* display the instructions */}
                                       {recipe.data.instructions}
@@ -570,10 +581,11 @@ const FriendProfile: React.FC = () => {
                                 maxW="container.sm"
                                 onClick={() => {
                                   window.localStorage.setItem(
-                                    'VIEWRECIPE',
-                                    JSON.stringify(recipe.data),
+                                    "VIEWRECIPE",
+                                    JSON.stringify(recipe.data)
                                   );
-                                }}>
+                                }}
+                              >
                                 <AiFillPrinter />
                                 {/* //Print Recipe Details */}
                                 <Text marginLeft={2}>Print Recipe</Text>

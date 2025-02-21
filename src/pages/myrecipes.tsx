@@ -1,16 +1,16 @@
-import React, {useState, useEffect} from 'react';
-import {db} from '../firebaseConfig';
-import {AiFillPrinter, AiOutlineHeart} from 'react-icons/ai';
-import {FiBookOpen} from 'react-icons/fi';
-import {CgBowl} from 'react-icons/cg';
+import React, { useState, useEffect } from "react";
+import { db } from "../authentication/firebaseConfig";
+import { AiFillPrinter, AiOutlineHeart } from "react-icons/ai";
+import { FiBookOpen } from "react-icons/fi";
+import { CgBowl } from "react-icons/cg";
 
 import {
   BsWindow,
   BsBookmarks,
   BsPeople,
   BsPersonPlusFill,
-} from 'react-icons/bs';
-import {RiPagesLine} from 'react-icons/ri';
+} from "react-icons/bs";
+import { RiPagesLine } from "react-icons/ri";
 
 import {
   collection,
@@ -20,8 +20,8 @@ import {
   query,
   deleteDoc,
   orderBy,
-} from 'firebase/firestore';
-import Navbar from '../components/Navbar';
+} from "firebase/firestore";
+import Navbar from "../components/HeaderFooters/Navbar";
 import {
   Box,
   Stack,
@@ -49,45 +49,39 @@ import {
   TabPanel,
   TabPanels,
   Spacer,
-} from '@chakra-ui/react';
-import {Link, useNavigate} from 'react-router-dom';
+} from "@chakra-ui/react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   useCollectionData,
   useDocumentData,
-} from 'react-firebase-hooks/firestore';
+} from "react-firebase-hooks/firestore";
 
 const Recipes: React.FC = () => {
   // toast for popups
   const toast = useToast();
   const navigate = useNavigate();
-  const email = JSON.parse(localStorage.getItem('EMAIL') as string);
+  const email = JSON.parse(localStorage.getItem("EMAIL") as string);
   const [liked, setLiked] = useState<any[]>([]);
 
-  const [followingProfiles, setFollowingProfiles] = useState<any[]>([]);
-
   // get all the recipes and create a listener to the DB
-  const recipesQuery = query(collection(db, 'users/' + email + '/Recipes'));
-  const [recipes, recipesLoading, recipesError] =
-    useCollectionData(recipesQuery);
+  const recipesQuery = query(collection(db, "users/" + email + "/Recipes"));
+  const [recipes] = useCollectionData(recipesQuery);
 
   // get all the saved recipes and create a listener to the db
   const savedRecipesQuery = query(
-    collection(db, 'users/' + email + '/SavedRecipes'),
+    collection(db, "users/" + email + "/SavedRecipes")
   );
-  const [savedRecipes, savedRecipesLoading, savedRecipesError] =
-    useCollectionData(savedRecipesQuery);
+  const [savedRecipes] = useCollectionData(savedRecipesQuery);
 
   // get the current user's profile and create a listener to the db
-  const [profile, profileLoading, profileError] = useDocumentData(
-    doc(db, 'users/', email),
-  );
+  const [profile] = useDocumentData(doc(db, "users/", email));
 
   // get the current user's posts and create a listener to the db
   const postsQuery = query(
-    collection(db, 'posts'),
-    where('email', '==', email),
+    collection(db, "posts"),
+    where("email", "==", email)
   );
-  const [posts, postsLoading, postsError] = useCollectionData(postsQuery);
+  const [posts] = useCollectionData(postsQuery);
   // number of posts
   const numPosts = posts?.length;
 
@@ -97,14 +91,14 @@ const Recipes: React.FC = () => {
     async function getLikedPosts() {
       // liked posts query, ordered by time
       const likedPostsQuery = query(
-        collection(db, 'posts'),
-        where('date_time', 'in', profile?.liked),
-        orderBy('date_time', 'desc'),
+        collection(db, "posts"),
+        where("date_time", "in", profile?.liked),
+        orderBy("date_time", "desc")
       );
       const querySnapshot = await getDocs(likedPostsQuery);
       // create a temp array and add the posts to it
       const tempArray: any[] = [];
-      querySnapshot?.forEach(doc => {
+      querySnapshot?.forEach((doc) => {
         tempArray.push(doc.data());
       });
       // set the liked variable to the temp array
@@ -119,74 +113,53 @@ const Recipes: React.FC = () => {
   // function to delete a recipe
   async function deleteMyRecipe(recipeName: string) {
     if (recipeName === null) {
-      recipeName = 'null';
+      recipeName = "null";
     }
     // delete from db
-    await deleteDoc(doc(db, 'users/', email, 'Recipes/', recipeName));
+    await deleteDoc(doc(db, "users/", email, "Recipes/", recipeName));
   }
 
   // function to delete a saved recipe
   async function deleteSavedRecipe(recipeName: string) {
     if (recipeName === null) {
-      recipeName = 'null';
+      recipeName = "null";
     }
     // delete from db
-    await deleteDoc(doc(db, 'users/', email, 'SavedRecipes/', recipeName));
+    await deleteDoc(doc(db, "users/", email, "SavedRecipes/", recipeName));
   }
 
   // function to delete a post
   async function deletePost(datetime: any) {
     // get the post with the datetime
     const q = query(
-      collection(db, 'posts/'),
-      where('date_time', '==', datetime),
+      collection(db, "posts/"),
+      where("date_time", "==", datetime)
     );
     const docs = await getDocs(q);
     // delete the document
-    docs.forEach(async doc => {
+    docs.forEach(async (doc) => {
       await deleteDoc(doc.ref);
     });
   }
 
   //Functions to adjust Title Size
   function titleSize(title: string) {
-    return 34 - title.length * 0.2 + 'px';
+    return 34 - title.length * 0.2 + "px";
   }
 
   return (
     <>
-      <Navbar />
-      <Flex
-        w={'full'}
-        h={'100'}
-        backgroundSize={'cover'}
-        backgroundPosition={'center center'}
-        alignContent={'flex-end'}
-        backgroundColor="rgba(0, 128, 128)">
-        <VStack
-          w={'full'}
-          px={useBreakpointValue({base: 4, md: 8})}
-          // bgGradient={'linear(to-r, blackAlpha.600, transparent)'}
-        >
-          <Stack minW={'2xl'} spacing={6}>
-            <Text textAlign="center" fontSize="6xl" as="b" color="white">
-              @
-              {
-                // username at the top
-                profile?.username
-              }
-            </Text>
-          </Stack>
-        </VStack>
-      </Flex>
+      <Navbar pageHeader={"@" + profile?.username} />
+
       <Container
-        maxW={'10xl'}
+        maxW={"10xl"}
         py={12}
         bg=""
         alignContent="center"
         display="flex"
         justifyContent="center"
-        alignItems="center">
+        alignItems="center"
+      >
         <HStack spacing="65px">
           <VStack>
             <HStack spacing={4}>
@@ -200,7 +173,7 @@ const Recipes: React.FC = () => {
                   // display the current user's profile picture
                   profile?.profilePic
                 }
-              />{' '}
+              />{" "}
               <VStack marginLeft={10}>
                 <Heading>
                   {
@@ -214,7 +187,7 @@ const Recipes: React.FC = () => {
                     {
                       // display the number of recipes
                       recipes?.length
-                    }{' '}
+                    }{" "}
                     recipe
                   </Text>
                 ) : (
@@ -233,7 +206,7 @@ const Recipes: React.FC = () => {
                   <Text fontSize={18}>{profile?.following.length} friends</Text>
                 )}
 
-                <Text color={'black'} fontSize={'lg'} maxWidth={500}>
+                <Text color={"black"} fontSize={"lg"} maxWidth={500}>
                   {
                     // display the bio of the user
                     profile?.biography
@@ -250,17 +223,18 @@ const Recipes: React.FC = () => {
                   onClick={() => {
                     // button that links to create recipe
                     // removes everything from localstorage on click
-                    window.localStorage.removeItem('RECIPENAME');
-                    window.localStorage.removeItem('COOKINGTIME');
-                    window.localStorage.removeItem('DIFFICULTY');
-                    window.localStorage.removeItem('APPLIANCES');
-                    window.localStorage.removeItem('COST');
-                    window.localStorage.removeItem('ALLERGENS');
-                    window.localStorage.removeItem('SERVINGS');
-                    window.localStorage.removeItem('INSTRUCTIONS');
-                    window.localStorage.removeItem('INGREDIENTSTRING');
-                    window.localStorage.removeItem('INGREDIENTCOUNT');
-                  }}>
+                    window.localStorage.removeItem("RECIPENAME");
+                    window.localStorage.removeItem("COOKINGTIME");
+                    window.localStorage.removeItem("DIFFICULTY");
+                    window.localStorage.removeItem("APPLIANCES");
+                    window.localStorage.removeItem("COST");
+                    window.localStorage.removeItem("ALLERGENS");
+                    window.localStorage.removeItem("SERVINGS");
+                    window.localStorage.removeItem("INSTRUCTIONS");
+                    window.localStorage.removeItem("INGREDIENTSTRING");
+                    window.localStorage.removeItem("INGREDIENTCOUNT");
+                  }}
+                >
                   Create Recipe
                 </Button>
               </Link>
@@ -270,10 +244,11 @@ const Recipes: React.FC = () => {
                   rightIcon={<BsWindow />}
                   colorScheme="gray"
                   onClick={() => {
-                    window.localStorage.removeItem('TITLE');
-                    window.localStorage.removeItem('DESCRIPTION');
-                    window.localStorage.removeItem('RECIPE');
-                  }}>
+                    window.localStorage.removeItem("TITLE");
+                    window.localStorage.removeItem("DESCRIPTION");
+                    window.localStorage.removeItem("RECIPE");
+                  }}
+                >
                   Create Post
                 </Button>
               </Link>
@@ -286,30 +261,31 @@ const Recipes: React.FC = () => {
         {/* tabs for different data */}
         <TabList
           sx={{
-            justifyContent: 'center',
-          }}>
+            justifyContent: "center",
+          }}
+        >
           <Tab>
-            {' '}
+            {" "}
             <FiBookOpen />
             <Text marginLeft={2}>Recipe Book</Text>
           </Tab>
           <Tab>
-            {' '}
+            {" "}
             <BsBookmarks />
             <Text marginLeft={2}>Saved Recipes</Text>
           </Tab>
           <Tab>
-            {' '}
+            {" "}
             <RiPagesLine />
             <Text marginLeft={2}>My Posts</Text>
           </Tab>
           <Tab>
-            {' '}
-            <AiOutlineHeart style={{fontSize: '34px'}} />
+            {" "}
+            <AiOutlineHeart style={{ fontSize: "34px" }} />
             <Text marginLeft={2}>Liked Posts</Text>
           </Tab>
           <Tab>
-            {' '}
+            {" "}
             <BsPeople />
             <Text marginLeft={2}>My Friends</Text>
           </Tab>
@@ -317,14 +293,15 @@ const Recipes: React.FC = () => {
         <TabPanels>
           <TabPanel>
             <HStack spacing={10}>
-              <Box>
+              {/* <Box>
                 <SimpleGrid
                   columns={3}
                   padding={9}
                   alignContent="center"
                   display="flex"
                   justifyContent="center"
-                  alignItems="center">
+                  alignItems="center"
+                >
                   {
                     // if they have no recipes
                     recipes?.length === 0 ? (
@@ -332,7 +309,8 @@ const Recipes: React.FC = () => {
                         <Heading
                           alignSelf="center"
                           minH="350"
-                          textAlign="center">
+                          textAlign="center"
+                        >
                           You have 0 recipes
                         </Heading>
                       </Center>
@@ -340,9 +318,9 @@ const Recipes: React.FC = () => {
                       // when recipes loads,
                       recipes &&
                       // map each individual recipe
-                      recipes.map(recipe => (
+                      recipes.map((recipe) => (
                         <Container
-                          boxShadow={'2xl'}
+                          boxShadow={"2xl"}
                           maxW="md"
                           borderRadius="lg"
                           overflow="hidden"
@@ -356,7 +334,8 @@ const Recipes: React.FC = () => {
                           margin={4}
                           marginRight={10}
                           marginLeft={10}
-                          shadow={'dark-lg'}>
+                          shadow={"dark-lg"}
+                        >
                           <VStack align="2x1">
                             <Center>
                               <Image
@@ -378,12 +357,14 @@ const Recipes: React.FC = () => {
                               as="h3"
                               size="lg"
                               color="black"
-                              padding={1}>
+                              padding={1}
+                            >
                               <Center>
                                 <Text
                                   as="b"
                                   fontSize={titleSize(recipe.data.recipe_name)}
-                                  textColor="white">
+                                  textColor="white"
+                                >
                                   {
                                     // name of the recipe
                                     recipe.data.recipe_name
@@ -397,8 +378,9 @@ const Recipes: React.FC = () => {
                               padding="4"
                               bg="white"
                               color="black"
-                              maxW="container.sm">
-                              {/* displaying recipe data */}
+                              maxW="container.sm"
+                            >
+                          
                               <Text noOfLines={1}>
                                 Difficulty: {recipe.data.difficulty}
                               </Text>
@@ -412,7 +394,7 @@ const Recipes: React.FC = () => {
                                 Cost Per Serving: {recipe.data.cost_per_serving}
                               </Text>
                               <Text noOfLines={1}>
-                                Cooking Applications:{' '}
+                                Cooking Applications:{" "}
                                 {recipe.data.cooking_applications}
                               </Text>
                               <Text noOfLines={1}>
@@ -422,7 +404,7 @@ const Recipes: React.FC = () => {
                             <Accordion allowMultiple>
                               <AccordionItem>
                                 <h2>
-                                  {/* accordion for nutrition data  */}
+                           
                                   <AccordionButton bg="white">
                                     <Box as="span" flex="1" textAlign="left">
                                       <Text as="b" textColor="black">
@@ -436,60 +418,61 @@ const Recipes: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
-                                    {/* each accordion panel contains:  */}
+                                    maxW="container.sm"
+                                  >
+                                  
                                     <Text noOfLines={1} textColor="white">
-                                      Calories:{' '}
+                                      Calories:{" "}
                                       {recipe.data.nutrients.calories.toFixed(
-                                        2,
-                                      )}{' '}
+                                        2
+                                      )}{" "}
                                       kCal
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Protein:{' '}
+                                      Protein:{" "}
                                       {recipe.data.nutrients.protein.toFixed(2)}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Carbs:{' '}
+                                      Carbs:{" "}
                                       {recipe.data.nutrients.total_carbohydrate.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sugar:{' '}
+                                      Sugar:{" "}
                                       {recipe.data.nutrients.sugars.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fat:{' '}
+                                      Fat:{" "}
                                       {recipe.data.nutrients.total_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Saturated Fat:{' '}
+                                      Saturated Fat:{" "}
                                       {recipe.data.nutrients.saturated_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Cholesterol:{' '}
+                                      Cholesterol:{" "}
                                       {recipe.data.nutrients.cholesterol.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sodium:{' '}
+                                      Sodium:{" "}
                                       {recipe.data.nutrients.sodium.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fiber:{' '}
+                                      Fiber:{" "}
                                       {recipe.data.nutrients.dietary_fiber.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
@@ -514,11 +497,12 @@ const Recipes: React.FC = () => {
                                     (ingredient: string, index: number) => (
                                       <Text
                                         key={index}
-                                        textColor="whiteAlpha.900">
-                                        {' '}
+                                        textColor="whiteAlpha.900"
+                                      >
+                                        {" "}
                                         <li> {ingredient}</li>
                                       </Text>
-                                    ),
+                                    )
                                   )}
                                 </AccordionPanel>
                               </AccordionItem>
@@ -526,7 +510,7 @@ const Recipes: React.FC = () => {
                             <Accordion allowMultiple>
                               <AccordionItem>
                                 <h2>
-                                  {/* accordion for the instructions */}
+                                 
                                   <AccordionButton bg="white">
                                     <Box as="span" flex="1" textAlign="left">
                                       <Text as="b" textColor="black">
@@ -540,9 +524,10 @@ const Recipes: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
+                                    maxW="container.sm"
+                                  >
                                     <Text textColor="white">
-                                      {/* display the instructions */}
+                                   
                                       {recipe.data.instructions}
                                     </Text>
                                   </Box>
@@ -562,10 +547,11 @@ const Recipes: React.FC = () => {
                                 maxW="container.sm"
                                 onClick={() => {
                                   window.localStorage.setItem(
-                                    'VIEWRECIPE',
-                                    JSON.stringify(recipe.data),
+                                    "VIEWRECIPE",
+                                    JSON.stringify(recipe.data)
                                   );
-                                }}>
+                                }}
+                              >
                                 <AiFillPrinter />
                                 <Text marginLeft={2}>Print Recipe</Text>
                               </Button>
@@ -575,12 +561,12 @@ const Recipes: React.FC = () => {
                               boxShadow="xs"
                               rounded="md"
                               padding="4"
-                              bg={'red.400'}
+                              bg={"red.400"}
                               _hover={{
-                                bg: 'red.500',
+                                bg: "red.500",
                               }}
                               _focus={{
-                                bg: 'red.500',
+                                bg: "red.500",
                               }}
                               maxW="container.sm"
                               onClick={() => {
@@ -588,16 +574,17 @@ const Recipes: React.FC = () => {
                                 // on click, popup saying recipe deleted,
                                 // remove recipe from db
                                 toast({
-                                  title: 'Recipe deleted.',
+                                  title: "Recipe deleted.",
                                   description:
-                                    'This recipe has been removed from your recipe book.',
-                                  status: 'success',
+                                    "This recipe has been removed from your recipe book.",
+                                  status: "success",
                                   duration: 3000,
                                   isClosable: true,
                                 });
                                 // passing the name of the recipe
                                 deleteMyRecipe(recipe.data.recipe_name);
-                              }}>
+                              }}
+                            >
                               <Text textColor="white">Delete Recipe</Text>
                             </Button>
                           </HStack>
@@ -606,7 +593,7 @@ const Recipes: React.FC = () => {
                     )
                   }
                 </SimpleGrid>
-              </Box>
+              </Box> */}
             </HStack>
           </TabPanel>
           <TabPanel minH="100vh">
@@ -618,7 +605,8 @@ const Recipes: React.FC = () => {
                   alignContent="center"
                   display="flex"
                   justifyContent="center"
-                  alignItems="center">
+                  alignItems="center"
+                >
                   {
                     // if they have no recipes, display nothing
                     savedRecipes?.length === 0 ? (
@@ -628,9 +616,9 @@ const Recipes: React.FC = () => {
                     ) : (
                       // when savedRecipes loads, map savedRecipes individually
                       savedRecipes &&
-                      savedRecipes.map(recipe => (
+                      savedRecipes.map((recipe) => (
                         <Container
-                          boxShadow={'2xl'}
+                          boxShadow={"2xl"}
                           minW="sm"
                           borderRadius="lg"
                           overflow="hidden"
@@ -644,7 +632,8 @@ const Recipes: React.FC = () => {
                           margin={4}
                           marginRight={10}
                           marginLeft={10}
-                          shadow={'dark-lg'}>
+                          shadow={"dark-lg"}
+                        >
                           <VStack align="2x1">
                             <Center>
                               <Image
@@ -666,12 +655,14 @@ const Recipes: React.FC = () => {
                               as="h3"
                               size="lg"
                               color="black"
-                              padding={1}>
+                              padding={1}
+                            >
                               <Center>
                                 <Text
                                   as="b"
                                   fontSize={titleSize(recipe.data.recipe_name)}
-                                  textColor="white">
+                                  textColor="white"
+                                >
                                   {
                                     // display the recipe name
                                     recipe.data.recipe_name
@@ -685,7 +676,8 @@ const Recipes: React.FC = () => {
                               padding="4"
                               bg="white"
                               color="black"
-                              maxW="container.sm">
+                              maxW="container.sm"
+                            >
                               {/* display saved recipe data  */}
                               <Text noOfLines={1}>
                                 Difficulty: {recipe.data.difficulty}
@@ -700,7 +692,7 @@ const Recipes: React.FC = () => {
                                 Cost Per Serving: {recipe.data.cost_per_serving}
                               </Text>
                               <Text noOfLines={1}>
-                                Cooking Applications:{' '}
+                                Cooking Applications:{" "}
                                 {recipe.data.cooking_applications}
                               </Text>
                               <Text noOfLines={1}>
@@ -725,59 +717,60 @@ const Recipes: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
+                                    maxW="container.sm"
+                                  >
                                     <Text noOfLines={1} textColor="white">
-                                      Calories:{' '}
+                                      Calories:{" "}
                                       {recipe.data.nutrients.calories.toFixed(
-                                        2,
-                                      )}{' '}
+                                        2
+                                      )}{" "}
                                       kCal
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Protein:{' '}
+                                      Protein:{" "}
                                       {recipe.data.nutrients.protein.toFixed(2)}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Carbs:{' '}
+                                      Carbs:{" "}
                                       {recipe.data.nutrients.total_carbohydrate.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sugar:{' '}
+                                      Sugar:{" "}
                                       {recipe.data.nutrients.sugars.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fat:{' '}
+                                      Fat:{" "}
                                       {recipe.data.nutrients.total_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Saturated Fat:{' '}
+                                      Saturated Fat:{" "}
                                       {recipe.data.nutrients.saturated_fat.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Cholesterol:{' '}
+                                      Cholesterol:{" "}
                                       {recipe.data.nutrients.cholesterol.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Sodium:{' '}
+                                      Sodium:{" "}
                                       {recipe.data.nutrients.sodium.toFixed(2)}g
                                     </Text>
                                     <Text noOfLines={1} textColor="white">
-                                      Fiber:{' '}
+                                      Fiber:{" "}
                                       {recipe.data.nutrients.dietary_fiber.toFixed(
-                                        2,
+                                        2
                                       )}
                                       g
                                     </Text>
@@ -804,11 +797,12 @@ const Recipes: React.FC = () => {
                                     (ingredient: string, index: number) => (
                                       <Text
                                         key={index}
-                                        textColor="whiteAlpha.900">
-                                        {' '}
+                                        textColor="whiteAlpha.900"
+                                      >
+                                        {" "}
                                         <li> {ingredient}</li>
                                       </Text>
-                                    ),
+                                    )
                                   )}
                                 </AccordionPanel>
                               </AccordionItem>
@@ -831,7 +825,8 @@ const Recipes: React.FC = () => {
                                   <Box
                                     padding="4"
                                     color="black"
-                                    maxW="container.sm">
+                                    maxW="container.sm"
+                                  >
                                     <Text textColor="white">
                                       {
                                         // display the instructions
@@ -855,10 +850,11 @@ const Recipes: React.FC = () => {
                                 maxW="container.sm"
                                 onClick={() => {
                                   window.localStorage.setItem(
-                                    'VIEWRECIPE',
-                                    JSON.stringify(recipe.data),
+                                    "VIEWRECIPE",
+                                    JSON.stringify(recipe.data)
                                   );
-                                }}>
+                                }}
+                              >
                                 <AiFillPrinter />
                                 <Text marginLeft={2}>Print Recipe</Text>
                               </Button>
@@ -868,12 +864,12 @@ const Recipes: React.FC = () => {
                               boxShadow="xs"
                               rounded="md"
                               padding="4"
-                              bg={'red.400'}
+                              bg={"red.400"}
                               _hover={{
-                                bg: 'red.500',
+                                bg: "red.500",
                               }}
                               _focus={{
-                                bg: 'red.500',
+                                bg: "red.500",
                               }}
                               maxW="container.sm"
                               onClick={() => {
@@ -881,15 +877,16 @@ const Recipes: React.FC = () => {
                                 // on click, popup saying recipe deleted
                                 // remove recipe from DB
                                 toast({
-                                  title: 'Recipe removed.',
+                                  title: "Recipe removed.",
                                   description:
-                                    'This recipe has been removed from your saved recipes.',
-                                  status: 'success',
+                                    "This recipe has been removed from your saved recipes.",
+                                  status: "success",
                                   duration: 3000,
                                   isClosable: true,
                                 });
                                 deleteSavedRecipe(recipe.data.recipe_name);
-                              }}>
+                              }}
+                            >
                               <Text textColor="white">Remove Recipe</Text>
                             </Button>
                           </HStack>
@@ -909,7 +906,7 @@ const Recipes: React.FC = () => {
               </Heading>
             ) : (
               // map the posts
-              posts?.map(post => (
+              posts?.map((post) => (
                 <Container
                   // minH="100vh"
                   shadow={1000}
@@ -920,7 +917,8 @@ const Recipes: React.FC = () => {
                   padding={1}
                   rounded="lg"
                   boxShadow="dark-lg"
-                  backgroundColor="rgba(0, 128, 128, 1)">
+                  backgroundColor="rgba(0, 128, 128, 1)"
+                >
                   <Box
                     padding={4}
                     rounded="md"
@@ -929,9 +927,10 @@ const Recipes: React.FC = () => {
                     color="white"
                     minH="350"
                     display="flex"
-                    flexDirection="column">
+                    flexDirection="column"
+                  >
                     <HStack>
-                      <div style={{flex: 1, fontSize: '24px'}}>
+                      <div style={{ flex: 1, fontSize: "24px" }}>
                         {
                           // display the recipe name
                           post?.recipe.data.recipe_name
@@ -942,12 +941,12 @@ const Recipes: React.FC = () => {
                         boxShadow="xs"
                         rounded="md"
                         padding="4"
-                        bg={'red.400'}
+                        bg={"red.400"}
                         _hover={{
-                          bg: 'red.500',
+                          bg: "red.500",
                         }}
                         _focus={{
-                          bg: 'red.500',
+                          bg: "red.500",
                         }}
                         maxW="container.sm"
                         onClick={() => {
@@ -957,14 +956,15 @@ const Recipes: React.FC = () => {
                           deletePost(post?.date_time);
                           // popup showing the recipe was deleted
                           toast({
-                            title: 'Post Deleted',
+                            title: "Post Deleted",
                             description:
-                              'This post has been permanently removed',
-                            status: 'success',
+                              "This post has been permanently removed",
+                            status: "success",
                             duration: 3000,
                             isClosable: true,
                           });
-                        }}>
+                        }}
+                      >
                         <Text textColor="white">Delete Post</Text>
                       </Button>
                     </HStack>
@@ -981,7 +981,8 @@ const Recipes: React.FC = () => {
                       direction="row"
                       spacing={4}
                       align="stretch"
-                      marginBottom={3}>
+                      marginBottom={3}
+                    >
                       <Spacer />
                       <Text fontSize={20}>
                         {
@@ -1018,11 +1019,12 @@ const Recipes: React.FC = () => {
                           // link to recipeDetail
                           onClick={() => {
                             window.localStorage.setItem(
-                              'VIEWRECIPE',
-                              JSON.stringify(post?.recipe.data),
+                              "VIEWRECIPE",
+                              JSON.stringify(post?.recipe.data)
                             );
-                            navigate('../recipeDetail');
-                          }}>
+                            navigate("../recipeDetail");
+                          }}
+                        >
                           View Recipe
                         </Button>
                       </Flex>
@@ -1045,7 +1047,7 @@ const Recipes: React.FC = () => {
                 </Heading>
               ) : (
                 // map the liked posts
-                liked?.map(post => (
+                liked?.map((post) => (
                   <Container
                     // minH="100vh"
                     shadow={1000}
@@ -1056,7 +1058,8 @@ const Recipes: React.FC = () => {
                     padding={1}
                     rounded="lg"
                     boxShadow="dark-lg"
-                    backgroundColor="rgba(0, 128, 128, 1)">
+                    backgroundColor="rgba(0, 128, 128, 1)"
+                  >
                     <Box
                       padding={4}
                       rounded="md"
@@ -1065,8 +1068,9 @@ const Recipes: React.FC = () => {
                       color="white"
                       minH="350"
                       display="flex"
-                      flexDirection="column">
-                      <div style={{flex: 1, fontSize: '24px'}}>
+                      flexDirection="column"
+                    >
+                      <div style={{ flex: 1, fontSize: "24px" }}>
                         {
                           // display the recipe name
                           post?.recipe.data.recipe_name
@@ -1085,7 +1089,8 @@ const Recipes: React.FC = () => {
                         direction="row"
                         spacing={4}
                         align="stretch"
-                        marginBottom={3}>
+                        marginBottom={3}
+                      >
                         <Spacer />
                         <Text fontSize={20}>
                           {
@@ -1122,11 +1127,12 @@ const Recipes: React.FC = () => {
                             // link to recipeDetail
                             onClick={() => {
                               window.localStorage.setItem(
-                                'VIEWRECIPE',
-                                JSON.stringify(post?.recipe.data),
+                                "VIEWRECIPE",
+                                JSON.stringify(post?.recipe.data)
                               );
-                              navigate('../recipeDetail');
-                            }}>
+                              navigate("../recipeDetail");
+                            }}
+                          >
                             View Recipe
                           </Button>
                         </Flex>
@@ -1152,7 +1158,7 @@ const Recipes: React.FC = () => {
               ) : (
                 profile?.following.map((friend: any) => (
                   <Container
-                    boxShadow={'2xl'}
+                    boxShadow={"2xl"}
                     minW="container.md"
                     borderRadius="lg"
                     overflow="hidden"
@@ -1166,7 +1172,8 @@ const Recipes: React.FC = () => {
                     margin={4}
                     marginRight={10}
                     marginLeft={10}
-                    shadow={'dark-lg'}>
+                    shadow={"dark-lg"}
+                  >
                     <VStack align="2x1">
                       <HStack>
                         <Avatar
@@ -1179,7 +1186,7 @@ const Recipes: React.FC = () => {
                           <Text>{}</Text>
                           <Text>{friend?.recipes?.length} Recipes</Text>
                           <Text>User's Posts</Text>
-                          <Text color={'black'} fontSize={'lg'}>
+                          <Text color={"black"} fontSize={"lg"}>
                             {/* Use friend here instead of profile */}
                             {friend.biography}
                           </Text>
@@ -1191,7 +1198,8 @@ const Recipes: React.FC = () => {
                         as="h3"
                         size="lg"
                         color="black"
-                        padding={1}>
+                        padding={1}
+                      >
                         <Center>
                           <Text as="b" fontSize="34px" textColor="white"></Text>
                         </Center>
@@ -1202,7 +1210,8 @@ const Recipes: React.FC = () => {
                         padding="4"
                         bg="white"
                         color="black"
-                        maxW="container.md"></Box>
+                        maxW="container.md"
+                      ></Box>
                     </VStack>
                     <HStack align="right" marginTop={2}>
                       <Button
@@ -1215,7 +1224,8 @@ const Recipes: React.FC = () => {
                         maxW="container.400"
                         onClick={() => {
                           // Print Recipe
-                        }}>
+                        }}
+                      >
                         <BsPersonPlusFill />
                         <Text marginLeft={2}>Follow</Text>
                       </Button>
@@ -1223,11 +1233,12 @@ const Recipes: React.FC = () => {
                         <Button
                           variant="outline"
                           flex={1}
-                          fontSize={'sm'}
+                          fontSize={"sm"}
                           _focus={{
-                            bg: 'gray.200',
+                            bg: "gray.200",
                           }}
-                          onClick={() => {}}>
+                          onClick={() => {}}
+                        >
                           <Text textColor="white">View Recipes</Text>
                         </Button>
                       </Link>

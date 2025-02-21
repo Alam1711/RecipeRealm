@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import {db} from '../firebaseConfig';
+import React, { useState, useEffect } from "react";
+import Navbar from "../components/HeaderFooters/Navbar";
+import Footer from "../components/HeaderFooters/Footer";
+import { db } from "../authentication/firebaseConfig";
 import {
   collection,
   addDoc,
@@ -13,13 +13,13 @@ import {
   query,
   orderBy,
   updateDoc,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 import {
   getAuth,
   onAuthStateChanged,
   updateEmail,
   updatePassword,
-} from 'firebase/auth';
+} from "firebase/auth";
 import {
   Button,
   Flex,
@@ -54,12 +54,12 @@ import {
   AccordionItem,
   AccordionPanel,
   Container,
-} from '@chakra-ui/react';
-import {BsPersonPlusFill} from 'react-icons/bs';
-import {Link} from 'react-router-dom';
-import {Search2Icon, SmallCloseIcon} from '@chakra-ui/icons';
-import Posts from './posts/posts';
-import {AiFillPrinter} from 'react-icons/ai';
+} from "@chakra-ui/react";
+import { BsPersonPlusFill } from "react-icons/bs";
+import { Link } from "react-router-dom";
+import { Search2Icon, SmallCloseIcon } from "@chakra-ui/icons";
+import Posts from "./Posts/posts";
+import { AiFillPrinter } from "react-icons/ai";
 
 /**
  * call to database to to store and retrieve information
@@ -70,12 +70,12 @@ import {AiFillPrinter} from 'react-icons/ai';
 async function toDB(
   newBiography: string,
   newUsername: string,
-  newPassword: string,
+  newPassword: string
 ) {
-  const email = JSON.parse(localStorage.getItem('EMAIL') as string);
+  const email = JSON.parse(localStorage.getItem("EMAIL") as string);
   const auth = getAuth();
   const user = auth.currentUser;
-  const docRef = doc(db, 'users/', email);
+  const docRef = doc(db, "users/", email);
 
   if (user) {
     updatePassword(user, newPassword);
@@ -83,61 +83,61 @@ async function toDB(
       username: newUsername,
       biography: newBiography,
     });
-    console.log('Document Written');
+    console.log("Document Written");
   } else {
-    console.log('No user!');
+    console.log("No user!");
   }
 }
 /**
- * 
- * @returns 
+ *
+ * @returns
  */
 const Friends: React.FC = () => {
-  const [newUsername, setNewUsername] = useState('');
-  const [newBiography, setNewBiography] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [newUsername, setNewUsername] = useState("");
+  const [newBiography, setNewBiography] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [profile, setProfile] = useState<any>();
-  const email = JSON.parse(localStorage.getItem('EMAIL') as string);
+  const email = JSON.parse(localStorage.getItem("EMAIL") as string);
 
   useEffect(() => {
     /**
      * method created to retrieve current profile from the database
      */
     async function getProfile() {
-      const getUser = doc(db, 'users/', email);
+      const getUser = doc(db, "users/", email);
       const getProfile = await getDoc(getUser);
       setProfile(getProfile.data());
     }
-    getProfile();//retieves current profile
+    getProfile(); //retieves current profile
     const username_from_storage: any =
-      window.localStorage.getItem('NEWUSERNAME');//retrieves current username fron storage
-    const email_from_storage: any = window.localStorage.getItem('NEWBIOGRAPHY');//retrieves email from local storage
+      window.localStorage.getItem("NEWUSERNAME"); //retrieves current username fron storage
+    const email_from_storage: any = window.localStorage.getItem("NEWBIOGRAPHY"); //retrieves email from local storage
 
-    setNewUsername(JSON.parse(username_from_storage));//changes username in database
-    setNewBiography(JSON.parse(email_from_storage));//changes biography in database
+    setNewUsername(JSON.parse(username_from_storage)); //changes username in database
+    setNewBiography(JSON.parse(email_from_storage)); //changes biography in database
   }, []);
-/**
- * method to change user name
- * @param e 
- */
+  /**
+   * method to change user name
+   * @param e
+   */
   const handleUsernameChange = (e: any) => {
     const name = e.target.value;
-    window.localStorage.setItem('NEWUSERNAME', JSON.stringify(name));
+    window.localStorage.setItem("NEWUSERNAME", JSON.stringify(name));
     setNewUsername(name);
   };
-/**
- * mthod to change biography
- * @param e 
- */
+  /**
+   * mthod to change biography
+   * @param e
+   */
   const handleBiographyChange = (e: any) => {
     const name = e.target.value;
-    window.localStorage.setItem('NEWBIOGRAPHY', JSON.stringify(name));
+    window.localStorage.setItem("NEWBIOGRAPHY", JSON.stringify(name));
     setNewBiography(name);
   };
-/**
- * sets password 
- * @param e 
- */
+  /**
+   * sets password
+   * @param e
+   */
   const handlePasswordChange = (e: any) => {
     const name = e.target.value;
     setNewPassword(name);
@@ -145,25 +145,8 @@ const Friends: React.FC = () => {
 
   return (
     <>
-      <Navbar />
-      <Flex
-        w={'full'}
-        h={'100'}
-        backgroundSize={'cover'}
-        backgroundPosition={'center center'}
-        alignContent={'flex-end'}
-        backgroundColor="rgba(0, 128, 128, 0.7)">
-        <VStack
-          w={'full'}
-          px={useBreakpointValue({base: 4, md: 8})}
-          backgroundColor="rgba(0, 128, 128, 0.7)">
-          <Stack maxW={'2xl'} spacing={6}>
-            <Text textAlign="center" fontSize="6xl" as="b" textColor="white">
-              Friends Page
-            </Text>
-          </Stack>
-        </VStack>
-      </Flex>
+      <Navbar pageHeader="Friends Page" />
+
       <Center>
         <InputGroup
           borderRadius={5}
@@ -173,7 +156,8 @@ const Friends: React.FC = () => {
           maxW="60%" // Increase the maximum width as needed
           marginTop={3}
           rounded="3xl"
-          bg="white">
+          bg="white"
+        >
           <InputLeftElement children={<Search2Icon color="gray.600" />} />
           <Input type="text" placeholder="Search..." rounded="lg" />
           <InputRightAddon p={0} border="none" marginLeft={3}>
@@ -192,10 +176,10 @@ const Friends: React.FC = () => {
             </TabList>
             <TabPanels>
               <TabPanel>
-                {' '}
+                {" "}
                 <VStack>
                   <Container
-                    boxShadow={'2xl'}
+                    boxShadow={"2xl"}
                     minW="xl"
                     borderRadius="lg"
                     overflow="hidden"
@@ -209,7 +193,8 @@ const Friends: React.FC = () => {
                     margin={4}
                     marginRight={10}
                     marginLeft={10}
-                    shadow={'dark-lg'}>
+                    shadow={"dark-lg"}
+                  >
                     <VStack align="2x1">
                       <HStack>
                         <Avatar
@@ -221,7 +206,7 @@ const Friends: React.FC = () => {
                           <Heading> User's Page</Heading>
                           <Text>Uesr's Recipes</Text>
                           <Text>User's Posts</Text>
-                          <Text color={'black'} fontSize={'lg'}>
+                          <Text color={"black"} fontSize={"lg"}>
                             {profile?.biography}
                           </Text>
                         </VStack>
@@ -232,7 +217,8 @@ const Friends: React.FC = () => {
                         as="h3"
                         size="lg"
                         color="black"
-                        padding={1}>
+                        padding={1}
+                      >
                         <Center>
                           <Text as="b" fontSize="34px" textColor="white"></Text>
                         </Center>
@@ -244,7 +230,8 @@ const Friends: React.FC = () => {
                         padding="4"
                         bg="white"
                         color="black"
-                        maxW="container.sm"></Box>
+                        maxW="container.sm"
+                      ></Box>
                     </VStack>
                     <HStack align="right" marginTop={2}>
                       <Button
@@ -257,7 +244,8 @@ const Friends: React.FC = () => {
                         maxW="container.400"
                         onClick={() => {
                           //Print Recipe
-                        }}>
+                        }}
+                      >
                         <BsPersonPlusFill />
                         <Text marginLeft={2}>Follow</Text>
                       </Button>
@@ -265,11 +253,12 @@ const Friends: React.FC = () => {
                         <Button
                           variant="outline"
                           flex={1}
-                          fontSize={'sm'}
+                          fontSize={"sm"}
                           _focus={{
-                            bg: 'gray.200',
+                            bg: "gray.200",
                           }}
-                          onClick={() => {}}>
+                          onClick={() => {}}
+                        >
                           <Text textColor="white">View Recipes</Text>
                         </Button>
                       </Link>

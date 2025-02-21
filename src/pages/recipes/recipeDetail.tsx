@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, { useRef } from "react";
 import {
   Box,
   Button,
@@ -9,30 +9,37 @@ import {
   Heading,
   Text,
   Container,
-} from '@chakra-ui/react';
-import {useReactToPrint} from 'react-to-print';
-import Navbar from '../../components/Navbar';
-import {AiFillPrinter} from 'react-icons/ai';
+  Divider,
+} from "@chakra-ui/react";
+import { useReactToPrint } from "react-to-print";
+import Navbar from "../../components/HeaderFooters/Navbar";
+import { AiFillPrinter } from "react-icons/ai";
 
 const RecipeDetail: React.FC = () => {
-  //Defines component Ref
+  // Defines component Ref
   const componentRef = useRef<HTMLDivElement | null>(null);
-//Handle's Printing
+
+  // Handle's Printing
   const handlePrint = useReactToPrint({
     content: () => componentRef.current!,
-    documentTitle: 'emp-data',
+    documentTitle: "recipe-detail",
   });
-//Adjust Recipe Size
+
+  // Adjust Recipe Size
   function recipeSize(ing: number) {
-    return 17 - ing * 0.2 + 'px';
+    return 17 - ing * 0.2 + "px";
   }
+
+  // Get recipe data from localStorage
+  const recipe = JSON.parse(
+    window.localStorage.getItem("VIEWRECIPE") as string
+  );
 
   return (
     <>
       <Navbar />
-      {/* <Box ref={componentRef}> Bigger page of all Details of Recipe</Box> */}
       <Center>
-        {/* //Button to print recipe */}
+        {/* Button to print recipe */}
         <Button
           marginTop={3}
           boxShadow="xs"
@@ -43,9 +50,9 @@ const RecipeDetail: React.FC = () => {
           padding={5}
           width={1000}
           maxW="container.lg"
-          onClick={handlePrint}>
+          onClick={handlePrint}
+        >
           <AiFillPrinter />
-          {/* Print Recipe Button */}
           <Text marginLeft={2}>Print Recipe</Text>
         </Button>
       </Center>
@@ -54,183 +61,110 @@ const RecipeDetail: React.FC = () => {
           <Center>
             <Box
               ref={componentRef}
-              bg="lightgray"
+              bg="white"
               w="100%"
               p={4}
-              color="white"
-              rounded={40}>
-              <VStack>
-                <Box w="100%" bgColor={'#36989c'} rounded={40}>
-                  {/* //Display Image of Logoe */}
+              color="black"
+              rounded={40}
+              boxShadow="md"
+              className="printable"
+            >
+              <VStack spacing={6}>
+                <Box w="100%" textAlign="center">
                   <Image
                     borderRadius="30px"
-                    src={'newlogoteal.png'}
+                    src={"newlogoteal.png"}
                     alt="Logo"
                     w={120}
+                    mb={4}
                   />
+                  <Heading>{recipe.recipe_name}</Heading>
                 </Box>
-                <Heading>
-                  {/* //Show Recipe Name */}
-                  {
-                    JSON.parse(
-                      window.localStorage.getItem('VIEWRECIPE') as string,
-                    ).recipe_name
-                  }
-                </Heading>
-                <HStack alignItems={'start'} width="100%" paddingBottom={8}>
-                  {/* //Formats Boxes */}
+                <HStack alignItems="start" width="100%" spacing={10}>
                   <Box
                     w="60%"
-                    padding="8"
+                    p={4}
                     boxShadow="xs"
                     rounded="md"
-                    marginRight={10}
-                    bg="white"
-                    color="black"
-                    minHeight="400">
-                    {/* //Show Ingredients */}
-                    <Text noOfLines={2} fontSize={25} marginBottom={5}>
+                    bg="gray.50"
+                    minHeight="400px"
+                    className="printable"
+                  >
+                    <Text fontSize={25} mb={5}>
                       Ingredients:
                     </Text>
-                    {JSON.parse(
-                      window.localStorage.getItem('VIEWRECIPE') as string,
-                    ).ingredients.map((ingredient: string) => (
-                      //Displays individual ingredients 
-                      <Text
-                        noOfLines={2}
-                        fontSize={recipeSize(
-                          JSON.parse(
-                            window.localStorage.getItem('VIEWRECIPE') as string,
-                          ).ingredients.length,
-                        )}
-                        marginBottom={5}>
-                        <li>{ingredient}</li>
-                      </Text>
-                    ))}
+                    {recipe.ingredients.map(
+                      (ingredient: string, index: number) => (
+                        <Text
+                          key={index}
+                          fontSize={recipeSize(recipe.ingredients.length)}
+                          mb={2}
+                        >
+                          <li>{ingredient}</li>
+                        </Text>
+                      )
+                    )}
                   </Box>
-
                   <Container>
                     <Center>
-                      {/* //Show Recipe Image */}
                       <Image
                         borderRadius="30px"
-                        src={
-                          JSON.parse(
-                            window.localStorage.getItem('VIEWRECIPE') as string,
-                          ).pic
-                        }
-                        alt="Logo"
+                        src={recipe.pic}
+                        alt="Recipe Image"
                         w={480}
+                        className="printable"
                       />
                     </Center>
                   </Container>
                 </HStack>
+                <Divider />
+                <HStack width="100%" spacing={10}>
+                  <VStack width="40%" spacing={4}>
+                    <Box
+                      boxShadow="xs"
+                      rounded="md"
+                      bg="gray.50"
+                      p={4}
+                      width="100%"
+                      className="printable"
+                    >
+                      <Text fontSize={17}>Difficulty: {recipe.difficulty}</Text>
+                      <Text fontSize={17}>Time: {recipe.cooking_time}</Text>
+                      <Text fontSize={17}>Servings: {recipe.servings}</Text>
+                      <Text fontSize={17}>Cost Per Serving: {recipe.cost}</Text>
+                      <Text fontSize={17}>
+                        Cooking Applications: {recipe.cooking_applications}
+                      </Text>
+                      <Text fontSize={17}>Allergens: {recipe.allergens}</Text>
+                    </Box>
+                    <Box
+                      boxShadow="xs"
+                      rounded="md"
+                      bg="gray.50"
+                      p={4}
+                      width="100%"
+                      height="188px"
+                      className="printable"
+                    >
+                      <Text fontSize={20}>Notes</Text>
+                    </Box>
+                  </VStack>
+                  <Box
+                    w="60%"
+                    p={4}
+                    boxShadow="xs"
+                    rounded="md"
+                    bg="gray.50"
+                    minHeight="400px"
+                    className="printable"
+                  >
+                    <Text fontSize={25} mb={5}>
+                      Instructions:
+                    </Text>
+                    <Text fontSize={17}>{recipe.instructions}</Text>
+                  </Box>
+                </HStack>
               </VStack>
-              <HStack width="100%">
-                <VStack>
-                  <Box
-                    boxShadow="xs"
-                    rounded="md"
-                    marginRight={10}
-                    bg="white"
-                    color="black"
-                    width="90%"
-                    marginBottom={5}
-                    padding={5}>
-                    {/* displaying recipe data */}
-                    <Text noOfLines={2} fontSize={17}>
-                      Difficulty:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).difficulty
-                      }
-                    </Text>
-                    <Text noOfLines={2} fontSize={17}>
-                      {/* //Display's Recipe Time*/}
-                      Time:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).cooking_time
-                      }
-                    </Text>
-                    <Text noOfLines={2} fontSize={17}>
-                      {/* //Display's Recipe Servings*/}
-                      Servings:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).servings
-                      }
-                    </Text>
-                    <Text noOfLines={2} fontSize={17}>
-                      {/* //Display's Recipe Serving cost*/}
-                      Cost Per Serving:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).cost
-                      }
-                    </Text>
-                    <Text noOfLines={2} fontSize={17}>
-                      {/* //Display's Recipe Cooking Applications*/}
-                      Cooking Applications:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).cooking_applications
-                      }
-                    </Text>
-                    <Text noOfLines={2} fontSize={17}>
-                      {/* //Display's Recipe Allergens*/}
-                      Allergens:{' '}
-                      {
-                        JSON.parse(
-                          window.localStorage.getItem('VIEWRECIPE') as string,
-                        ).allergens
-                      }
-                    </Text>
-                  </Box>
-                  {/* //Add Notes Columns for user */}
-                  <Box
-                    boxShadow="xs"
-                    rounded="md"
-                    marginRight={10}
-                    bg="white"
-                    color="black"
-                    width="90%"
-                    height="188px"
-                    marginBottom={5}
-                    padding={5}
-                    paddingBlock={2}>
-                    <Text noOfLines={2} fontSize={20}>
-                      Notes
-                    </Text>
-                  </Box>
-                </VStack>
-                {/* //Box of Printer instructions */}
-                <Box
-                  w="60%"
-                  padding="8"
-                  boxShadow="xs"
-                  rounded="md"
-                  marginRight={10}
-                  bg="white"
-                  color="black"
-                  minHeight="400">
-                  {' '}
-                  {/* //Print Instructions */}
-                  <Text noOfLines={2} fontSize={25} marginBottom={5}>
-                    Instructions:
-                  </Text>
-                  {
-                    JSON.parse(
-                      window.localStorage.getItem('VIEWRECIPE') as string,
-                    ).instructions
-                  }
-                </Box>
-              </HStack>
             </Box>
           </Center>
         </Box>

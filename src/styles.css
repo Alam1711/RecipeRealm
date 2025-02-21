@@ -49,3 +49,36 @@ body {
 .nav li:hover {
   background-color: #777;
 }
+
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+  }
+
+  .printable {
+    page-break-inside: avoid;
+  }
+
+  .printable img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .printable h1,
+  .printable h2,
+  .printable h3,
+  .printable h4,
+  .printable h5,
+  .printable h6 {
+    page-break-after: avoid;
+  }
+
+  .printable p,
+  .printable li {
+    page-break-inside: avoid;
+  }
+
+  .printable .page-break {
+    page-break-before: always;
+  }
+}

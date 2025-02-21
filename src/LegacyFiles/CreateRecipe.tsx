@@ -1,7 +1,6 @@
-import {useState, useEffect} from 'react';
-import {db, storage} from '../../firebaseConfig';
-import {IoIosAdd, IoIosRemove} from 'react-icons/io';
-import {doc, setDoc} from 'firebase/firestore';
+import { useState, useEffect } from "react";
+import { IoIosAdd, IoIosRemove } from "react-icons/io";
+import { doc, setDoc } from "firebase/firestore";
 
 import {
   Progress,
@@ -33,14 +32,15 @@ import {
   Text,
   useBreakpointValue,
   HStack,
-} from '@chakra-ui/react';
-import {Link} from 'react-router-dom';
+} from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 
-import {useToast} from '@chakra-ui/react';
-import React from 'react';
-import {MinusIcon} from '@chakra-ui/icons';
-import Navbar from '../../components/Navbar';
-import {getDownloadURL, ref, uploadBytes} from 'firebase/storage';
+import { useToast } from "@chakra-ui/react";
+import React from "react";
+import { MinusIcon } from "@chakra-ui/icons";
+import Navbar from "../components/HeaderFooters/Navbar";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "../authentication/firebaseConfig";
 
 // type that holds nutrition facts
 type nutrition = {
@@ -79,10 +79,10 @@ type recipe = {
 async function fetchNutritionData(query: string): Promise<string> {
   // headers and body
   var myHeaders = new Headers();
-  myHeaders.append('Content-Type', 'application/json');
-  myHeaders.append('x-app-id', '3a83fb27');
-  myHeaders.append('x-app-key', '135db1d7aaba12d363ad7b2225656590');
-  myHeaders.append('search_nutrient', '"protein"');
+  myHeaders.append("Content-Type", "application/json");
+  myHeaders.append("x-app-id", "3a83fb27");
+  myHeaders.append("x-app-key", "135db1d7aaba12d363ad7b2225656590");
+  myHeaders.append("search_nutrient", '"protein"');
 
   var raw = JSON.stringify({
     query: query,
@@ -90,16 +90,16 @@ async function fetchNutritionData(query: string): Promise<string> {
 
   // variable to hold request data
   var requestOptions: any = {
-    method: 'POST',
+    method: "POST",
     headers: myHeaders,
     body: raw,
-    redirect: 'follow',
+    redirect: "follow",
   };
 
   // call API with request data, store in variable response
   const response = await fetch(
-    'https://trackapi.nutritionix.com/v2/natural/nutrients',
-    requestOptions,
+    "https://trackapi.nutritionix.com/v2/natural/nutrients",
+    requestOptions
   );
   // turn the result into a string
   const result = response.text();
@@ -128,7 +128,7 @@ async function getIngredientNutrients(query: string): Promise<nutrition> {
       cholesterol: parseFloat(obj.foods[0].nf_cholesterol.toFixed(2)),
       sodium: parseFloat(obj.foods[0].nf_sodium.toFixed(2)),
       total_carbohydrate: parseFloat(
-        obj.foods[0].nf_total_carbohydrate.toFixed(2),
+        obj.foods[0].nf_total_carbohydrate.toFixed(2)
       ),
       dietary_fiber: parseFloat(obj.foods[0].nf_dietary_fiber.toFixed(2)),
       sugars: parseFloat(obj.foods[0].nf_sugars.toFixed(2)),
@@ -180,9 +180,9 @@ async function getTotalNutrients(ingredients: string[]): Promise<nutrition> {
   // for every element in ingredients, add the ingredients nutrients to the recipe nutrient total
   try {
     await Promise.all(
-      ingredients.map(async ingredient => {
+      ingredients.map(async (ingredient) => {
         let ingredientNutrients: nutrition = await getIngredientNutrients(
-          ingredient,
+          ingredient
         );
         recipeNutrients.calories += ingredientNutrients.calories;
         recipeNutrients.total_fat += ingredientNutrients.total_fat;
@@ -194,7 +194,7 @@ async function getTotalNutrients(ingredients: string[]): Promise<nutrition> {
         recipeNutrients.dietary_fiber += ingredientNutrients.dietary_fiber;
         recipeNutrients.sugars += ingredientNutrients.sugars;
         recipeNutrients.protein += ingredientNutrients.protein;
-      }),
+      })
     );
     // return the nutrition facts for the whole recipe
     return recipeNutrients;
@@ -218,11 +218,11 @@ async function toDB(
   posted: boolean,
   ingredients: string[],
   instructions: string,
-  file: string,
+  file: string
 ) {
   // if there is a user logged in...
   // store the currently logged in user's email in email
-  const email = JSON.parse(localStorage.getItem('EMAIL') as string);
+  const email = JSON.parse(localStorage.getItem("EMAIL") as string);
   // get the total nutrients, pass in the provided ingredients string array
   const nutrients: nutrition = await getTotalNutrients(ingredients);
   const recipe: recipe = {
@@ -242,20 +242,20 @@ async function toDB(
   // call to add a document to the database, uses <email> to get to the actively logged in user's recipes
   // creates a document with name: <recipe_name>
   if (recipe_name === null) {
-    recipe_name = 'null';
+    recipe_name = "null";
   }
-  await setDoc(doc(db, 'users/' + email + '/Recipes', recipe_name), {
+  await setDoc(doc(db, "users/" + email + "/Recipes", recipe_name), {
     // name in database: variable
     data: recipe,
   });
-  console.log('Document written successfully');
+  console.log("Document written successfully");
 }
 
 function recipeHasName() {
   if (
-    JSON.parse(localStorage.getItem('RECIPENAME') as string) === null ||
-    JSON.parse(localStorage.getItem('RECIPENAME') as string).localeCompare(
-      '',
+    JSON.parse(localStorage.getItem("RECIPENAME") as string) === null ||
+    JSON.parse(localStorage.getItem("RECIPENAME") as string).localeCompare(
+      ""
     ) === 0
   ) {
     return true;
@@ -266,19 +266,19 @@ function recipeHasName() {
 const Form1 = () => {
   // useState to create variables
   const [titleCheck, setTitleCheck] = useState(false);
-  const [recipeName, setRecipeName] = useState('');
-  const [cookingTime, setCookingTime] = useState('');
+  const [recipeName, setRecipeName] = useState("");
+  const [cookingTime, setCookingTime] = useState("");
 
   // useEffect runs on mount
   useEffect(() => {
     // check local storage for any available data
-    const recipe_name_storage: any = window.localStorage.getItem('RECIPENAME');
+    const recipe_name_storage: any = window.localStorage.getItem("RECIPENAME");
     const cooking_time_storage: any =
-      window.localStorage.getItem('COOKINGTIME');
-    if (window.localStorage.getItem('COOKINGTIME')) {
+      window.localStorage.getItem("COOKINGTIME");
+    if (window.localStorage.getItem("COOKINGTIME")) {
       setRecipeName(JSON.parse(recipe_name_storage));
     } else {
-      setRecipeName('Recipe Title');
+      setRecipeName("Recipe Title");
     }
 
     setCookingTime(JSON.parse(cooking_time_storage));
@@ -288,7 +288,7 @@ const Form1 = () => {
   // write changes to local storage && useState's
   const handleNameChange = (e: any) => {
     const name = e.target.value;
-    window.localStorage.setItem('RECIPENAME', JSON.stringify(name));
+    window.localStorage.setItem("RECIPENAME", JSON.stringify(name));
     setRecipeName(name);
   };
   /**
@@ -297,17 +297,17 @@ const Form1 = () => {
    */
   const handleTimeChange = (e: any) => {
     const name = e.target.value;
-    window.localStorage.setItem('COOKINGTIME', JSON.stringify(name));
+    window.localStorage.setItem("COOKINGTIME", JSON.stringify(name));
     setCookingTime(name);
   };
 
   return (
     <>
-      <Heading w="100%" textAlign={'center'} fontWeight="normal" mb="2%">
+      <Heading w="100%" textAlign={"center"} fontWeight="normal" mb="2%">
         Recipe Title
       </Heading>
       <FormControl mt="2%">
-        <FormLabel htmlFor="recipeName" fontWeight={'normal'}>
+        <FormLabel htmlFor="recipeName" fontWeight={"normal"}>
           Recipe Name
         </FormLabel>
         <Input
@@ -322,7 +322,7 @@ const Form1 = () => {
       </FormControl>
 
       <FormControl>
-        <FormLabel htmlFor="cookingTime" fontWeight={'normal'} mt="2%">
+        <FormLabel htmlFor="cookingTime" fontWeight={"normal"} mt="2%">
           Cooking Time
         </FormLabel>
         <InputGroup size="md">
@@ -342,52 +342,52 @@ const Form1 = () => {
 
 const Form2 = () => {
   // useState's to hold basic data
-  const [difficulty, setDifficulty] = useState(' ');
-  const [appliances, setAppliances] = useState(' ');
-  const [cost, setCost] = useState(' ');
-  const [allergens, setAllergens] = useState(' ');
-  const [servings, setServings] = useState(' ');
+  const [difficulty, setDifficulty] = useState(" ");
+  const [appliances, setAppliances] = useState(" ");
+  const [cost, setCost] = useState(" ");
+  const [allergens, setAllergens] = useState(" ");
+  const [servings, setServings] = useState(" ");
 
   // ingredient variables
   const [ingredientCount, setcount] = useState(1);
   const [ingredientString, setIngredientString] = useState<string[]>([]);
   //ingredientHandlerState
-  const [ingredientName, setIngredientName] = useState('');
+  const [ingredientName, setIngredientName] = useState("");
   const [ingredientAmount, setIngredientAmount] = useState(0);
-  const [ingredientMeasurement, setIngredientMeasurement] = useState(' ');
+  const [ingredientMeasurement, setIngredientMeasurement] = useState(" ");
 
   useEffect(() => {
     // check local storage for any available data
     // set data to each respective variable
-    if (window.localStorage.getItem('DIFFICULTY') !== null) {
-      const difficulty_storage: any = window.localStorage.getItem('DIFFICULTY');
+    if (window.localStorage.getItem("DIFFICULTY") !== null) {
+      const difficulty_storage: any = window.localStorage.getItem("DIFFICULTY");
       setDifficulty(JSON.parse(difficulty_storage));
     }
-    if (window.localStorage.getItem('APPLIANCES') !== null) {
-      const appliances_storage: any = window.localStorage.getItem('APPLIANCES');
+    if (window.localStorage.getItem("APPLIANCES") !== null) {
+      const appliances_storage: any = window.localStorage.getItem("APPLIANCES");
       setAppliances(JSON.parse(appliances_storage));
     }
-    if (window.localStorage.getItem('COST')) {
-      const cost_storage: any = window.localStorage.getItem('COST');
+    if (window.localStorage.getItem("COST")) {
+      const cost_storage: any = window.localStorage.getItem("COST");
       setCost(JSON.parse(cost_storage));
     }
-    if (window.localStorage.getItem('ALLERGENS')) {
-      const allergens_storage: any = window.localStorage.getItem('ALLERGENS');
+    if (window.localStorage.getItem("ALLERGENS")) {
+      const allergens_storage: any = window.localStorage.getItem("ALLERGENS");
       setAllergens(JSON.parse(allergens_storage));
     }
-    if (window.localStorage.getItem('SERVINGS')) {
-      const servings_storage: any = window.localStorage.getItem('SERVINGS');
+    if (window.localStorage.getItem("SERVINGS")) {
+      const servings_storage: any = window.localStorage.getItem("SERVINGS");
       setServings(JSON.parse(servings_storage));
     }
-    if (window.localStorage.getItem('INGREDIENTCOUNT')) {
+    if (window.localStorage.getItem("INGREDIENTCOUNT")) {
       const ingredientCount_store: any = Number(
-        window.localStorage.getItem('INGREDIENTCOUNT'),
+        window.localStorage.getItem("INGREDIENTCOUNT")
       );
       setcount(JSON.parse(ingredientCount_store));
     }
-    if (window.localStorage.getItem('INGREDIENTSTRING')) {
+    if (window.localStorage.getItem("INGREDIENTSTRING")) {
       const ingredientString_store: any =
-        window.localStorage.getItem('INGREDIENTSTRING');
+        window.localStorage.getItem("INGREDIENTSTRING");
       setIngredientString(JSON.parse(ingredientString_store));
     }
   }, []);
@@ -396,37 +396,37 @@ const Form2 = () => {
   // on change: set item to local storage and to useState's
   const handleDifficultyChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('DIFFICULTY', JSON.stringify(targ));
+    window.localStorage.setItem("DIFFICULTY", JSON.stringify(targ));
     setDifficulty(targ);
   };
 
   const handleAppliancesChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('APPLIANCES', JSON.stringify(targ));
+    window.localStorage.setItem("APPLIANCES", JSON.stringify(targ));
     setAppliances(targ);
   };
 
   const handleCostChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('COST', JSON.stringify(targ));
+    window.localStorage.setItem("COST", JSON.stringify(targ));
     setCost(targ);
   };
 
   const handleAllergensChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('ALLERGENS', JSON.stringify(targ));
+    window.localStorage.setItem("ALLERGENS", JSON.stringify(targ));
     setAllergens(targ);
   };
 
   const handleServingsChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('SERVINGS', JSON.stringify(targ));
+    window.localStorage.setItem("SERVINGS", JSON.stringify(targ));
     setServings(targ);
   };
 
   //buttonDisable
   const disableAdd = (): boolean | undefined => {
-    if (ingredientName === '') {
+    if (ingredientName === "") {
       return true;
     }
     return false;
@@ -458,43 +458,43 @@ const Form2 = () => {
     const newIngredient = `${ingredientAmount} ${ingredientMeasurement} ${ingredientName}`;
 
     // check local storage, update string variables
-    if (localStorage.getItem('INGREDIENTSTRING') === null) {
+    if (localStorage.getItem("INGREDIENTSTRING") === null) {
       const helperString: string[] = [];
       helperString.push(newIngredient);
-      localStorage.setItem('INGREDIENTSTRING', JSON.stringify(helperString));
+      localStorage.setItem("INGREDIENTSTRING", JSON.stringify(helperString));
       setIngredientString(helperString);
     } else {
-      let retString = localStorage.getItem('INGREDIENTSTRING');
+      let retString = localStorage.getItem("INGREDIENTSTRING");
       let helperString: any = JSON.parse(retString as string);
       helperString.push(newIngredient);
-      localStorage.setItem('INGREDIENTSTRING', JSON.stringify(helperString));
+      localStorage.setItem("INGREDIENTSTRING", JSON.stringify(helperString));
       setIngredientString(helperString);
     }
     //clear data
     setIngredientAmount(0);
-    setIngredientMeasurement('');
-    setIngredientName('');
+    setIngredientMeasurement("");
+    setIngredientName("");
 
     // update the count variable
     setcount(ingredientString.length + 2);
-    localStorage.setItem('INGREDIENTCOUNT', JSON.stringify(ingredientCount));
+    localStorage.setItem("INGREDIENTCOUNT", JSON.stringify(ingredientCount));
   }
 
   // decrement count of ingredients
   function decrementCount() {
     // update local storage and variables
-    let retString = localStorage.getItem('INGREDIENTSTRING');
+    let retString = localStorage.getItem("INGREDIENTSTRING");
     let helperString: any = JSON.parse(retString as string);
     helperString.pop();
-    localStorage.setItem('INGREDIENTSTRING', JSON.stringify(helperString));
+    localStorage.setItem("INGREDIENTSTRING", JSON.stringify(helperString));
     setIngredientString(helperString);
     setcount(ingredientString.length);
-    localStorage.setItem('INGREDIENTCOUNT', JSON.stringify(ingredientCount));
+    localStorage.setItem("INGREDIENTCOUNT", JSON.stringify(ingredientCount));
   }
 
   return (
     <>
-      <Heading w="100%" textAlign={'center'} fontWeight="normal" mb="2%">
+      <Heading w="100%" textAlign={"center"} fontWeight="normal" mb="2%">
         Meal Details
       </Heading>
       <FormControl as={GridItem} colSpan={[6, 3]}>
@@ -504,8 +504,9 @@ const Form2 = () => {
           fontWeight="md"
           color="gray.700"
           _dark={{
-            color: 'gray.50',
-          }}>
+            color: "gray.50",
+          }}
+        >
           How difficult is this recipe?
         </FormLabel>
         <Select
@@ -520,7 +521,8 @@ const Form2 = () => {
           rounded="md"
           value={difficulty}
           // dropdown with options, onChange uses handler
-          onChange={handleDifficultyChange}>
+          onChange={handleDifficultyChange}
+        >
           <option>Beginner</option>
           <option>Intermediate</option>
           <option>Seasoned Chef</option>
@@ -535,9 +537,10 @@ const Form2 = () => {
           fontWeight="md"
           color="gray.700"
           _dark={{
-            color: 'gray.50',
+            color: "gray.50",
           }}
-          mt="2%">
+          mt="2%"
+        >
           {/* cost input */}
           Cost per Serving
         </FormLabel>
@@ -563,9 +566,10 @@ const Form2 = () => {
           fontWeight="md"
           color="gray.700"
           _dark={{
-            color: 'gray.50',
+            color: "gray.50",
           }}
-          mt="2%">
+          mt="2%"
+        >
           {/* appliances input */}
           Cooking Appliances
         </FormLabel>
@@ -592,9 +596,10 @@ const Form2 = () => {
           fontWeight="md"
           color="gray.700"
           _dark={{
-            color: 'gray.50',
+            color: "gray.50",
           }}
-          mt="2%">
+          mt="2%"
+        >
           {/* allergens input */}
           Allergens
         </FormLabel>
@@ -621,9 +626,10 @@ const Form2 = () => {
           fontWeight="md"
           color="gray.700"
           _dark={{
-            color: 'gray.50',
+            color: "gray.50",
           }}
-          mt="2%">
+          mt="2%"
+        >
           {/* yield input */}
           Servings (ie. 5 servings)
         </FormLabel>
@@ -644,9 +650,10 @@ const Form2 = () => {
       <Heading
         paddingTop={5}
         w="100%"
-        textAlign={'center'}
+        textAlign={"center"}
         fontWeight="normal"
-        mb="2%">
+        mb="2%"
+      >
         {/* ingredients input */}
         Ingredient List
       </Heading>
@@ -654,7 +661,7 @@ const Form2 = () => {
         <List spacing={3}>
           {
             // map the ingredients
-            Array.from({length: ingredientCount}).map((_, index) => (
+            Array.from({ length: ingredientCount }).map((_, index) => (
               <ListItem>
                 <ListIcon as={MinusIcon} color="green.500" />
                 {ingredientString.at(index)}
@@ -666,7 +673,7 @@ const Form2 = () => {
       <Flex>
         <React.Fragment>
           <FormControl mr="5%">
-            <FormLabel htmlFor={`ingredient-`} fontWeight={'normal'}>
+            <FormLabel htmlFor={`ingredient-`} fontWeight={"normal"}>
               {/* ingredient name input */}
               Ingredient Name #
             </FormLabel>
@@ -676,13 +683,13 @@ const Form2 = () => {
               // value is set to ingredientName and change calls handler
               value={ingredientName}
               onChange={handleIName}
-              maxLength={99}
+              maxLength={12}
               isRequired={true}
             />
           </FormControl>
 
           <FormControl mr="5%">
-            <FormLabel htmlFor={`amount-`} fontWeight={'normal'}>
+            <FormLabel htmlFor={`amount-`} fontWeight={"normal"}>
               {/* ingredient amount input */}
               Amount
             </FormLabel>
@@ -692,7 +699,8 @@ const Form2 = () => {
               // value is set to ingredientAmount, change calls handler
               value={ingredientAmount}
               onChange={handleIAmount}
-              isRequired={false}>
+              isRequired={false}
+            >
               <NumberInputField id={`amount-`} />
               <NumberInputStepper>
                 <NumberIncrementStepper />
@@ -701,7 +709,7 @@ const Form2 = () => {
             </NumberInput>
           </FormControl>
           <FormControl>
-            <FormLabel htmlFor={`unit-`} fontWeight={'normal'}>
+            <FormLabel htmlFor={`unit-`} fontWeight={"normal"}>
               {/* unit of measurement input */}
               Unit of Measurement
             </FormLabel>
@@ -715,7 +723,8 @@ const Form2 = () => {
               rounded="md"
               // value is set to ingredientMeasurement, change calls handler
               value={ingredientMeasurement}
-              onChange={handleIMeasurement}>
+              onChange={handleIMeasurement}
+            >
               {/* dropdown for options */}
               <option> </option>
               <option> </option>
@@ -740,7 +749,8 @@ const Form2 = () => {
           w="16rem"
           mr="5%"
           marginLeft="10%"
-          isDisabled={disableRemove()}>
+          isDisabled={disableRemove()}
+        >
           Remove Ingredient <IoIosRemove />
         </Button>
         <Button
@@ -752,7 +762,8 @@ const Form2 = () => {
           mr="5%"
           w="16rem"
           marginLeft="5%"
-          isDisabled={disableAdd()}>
+          isDisabled={disableAdd()}
+        >
           Add Ingredient <IoIosAdd />
         </Button>
       </Flex>
@@ -762,20 +773,20 @@ const Form2 = () => {
 
 const Form3 = () => {
   // useState's to create variables
-  const [instructions, setInstructions] = useState('');
+  const [instructions, setInstructions] = useState("");
   const [selectedFile, setSelectedFile] = useState<any>();
 
   useEffect(() => {
     // on mount, get instructions from local storage
     const instructions_storage: any =
-      window.localStorage.getItem('INSTRUCTIONS');
+      window.localStorage.getItem("INSTRUCTIONS");
     setInstructions(JSON.parse(instructions_storage));
   }, []);
 
   // handle instructions change, set value to local storage and instructions
   const handleInstructionsChange = (e: any) => {
     const targ = e.target.value;
-    window.localStorage.setItem('INSTRUCTIONS', JSON.stringify(targ));
+    window.localStorage.setItem("INSTRUCTIONS", JSON.stringify(targ));
     setInstructions(targ);
   };
 
@@ -784,16 +795,16 @@ const Form3 = () => {
     // create a storageRef with a random value
     const storageRef = ref(storage, Math.random().toString(16).slice(2));
     // upload the passed image to storage
-    uploadBytes(storageRef, file).then(async snapshot => {
+    uploadBytes(storageRef, file).then(async (snapshot) => {
       // when it has been uploaded, put the link in the db
-      await getDownloadURL(snapshot.ref).then(link => {
-        localStorage.setItem('FILE', JSON.stringify(link));
+      await getDownloadURL(snapshot.ref).then((link) => {
+        localStorage.setItem("FILE", JSON.stringify(link));
       });
     });
   }
   return (
     <>
-      <Heading w="100%" textAlign={'center'} fontWeight="normal">
+      <Heading w="100%" textAlign={"center"} fontWeight="normal">
         {/* instructions input */}
         Cooking Instructions
       </Heading>
@@ -804,8 +815,9 @@ const Form3 = () => {
             fontWeight="md"
             color="gray.700"
             _dark={{
-              color: 'gray.50',
-            }}>
+              color: "gray.50",
+            }}
+          >
             Instructions
           </FormLabel>
           <Textarea
@@ -814,7 +826,7 @@ const Form3 = () => {
             shadow="sm"
             focusBorderColor="brand.400"
             fontSize={{
-              sm: 'sm',
+              sm: "sm",
             }}
             // value is set to instructions, change calls handler
             value={instructions}
@@ -840,7 +852,7 @@ const Form3 = () => {
           <input
             type="file"
             name="myImage"
-            onChange={event => {
+            onChange={(event) => {
               if (event?.target?.files) {
                 // set the selected file to the user's chosen file
                 setSelectedFile(URL.createObjectURL(event.target.files[0]));
@@ -862,51 +874,53 @@ export default function Multistep() {
   const [step, setStep] = useState(1);
   const [progress, setProgress] = useState(33.33);
   // get ALL THE DATA from local storage
-  const recipeFromStorage: any = window.localStorage.getItem('RECIPENAME');
+  const recipeFromStorage: any = window.localStorage.getItem("RECIPENAME");
 
   const recipeName = JSON.parse(recipeFromStorage);
 
-  const cookingTimeStorage: any = window.localStorage.getItem('COOKINGTIME');
+  const cookingTimeStorage: any = window.localStorage.getItem("COOKINGTIME");
   const cookingTime = JSON.parse(cookingTimeStorage);
-  const difficultyStorage: any = window.localStorage.getItem('DIFFICULTY');
+  const difficultyStorage: any = window.localStorage.getItem("DIFFICULTY");
   const difficulty = JSON.parse(difficultyStorage);
-  const appliancesStorage: any = window.localStorage.getItem('APPLIANCES');
+  const appliancesStorage: any = window.localStorage.getItem("APPLIANCES");
   const appliances = JSON.parse(appliancesStorage);
-  const costStorage: any = window.localStorage.getItem('COST');
+  const costStorage: any = window.localStorage.getItem("COST");
   const cost = JSON.parse(costStorage);
-  const allergensStorage: any = window.localStorage.getItem('ALLERGENS');
+  const allergensStorage: any = window.localStorage.getItem("ALLERGENS");
   const allergens = JSON.parse(allergensStorage);
-  const servingsStorage: any = window.localStorage.getItem('SERVINGS');
+  const servingsStorage: any = window.localStorage.getItem("SERVINGS");
   const servings = JSON.parse(servingsStorage);
   const ingredientsStorage: any =
-    window.localStorage.getItem('INGREDIENTSTRING');
+    window.localStorage.getItem("INGREDIENTSTRING");
   const ingredients = JSON.parse(ingredientsStorage);
-  const fileStorage: any = window.localStorage.getItem('FILE');
+  const fileStorage: any = window.localStorage.getItem("FILE");
   const file = JSON.parse(fileStorage);
 
   return (
     <>
       <Navbar />
       <Flex
-        w={'full'}
-        h={'100'}
+        w={"full"}
+        h={"100"}
         backgroundImage={
-          'url(https://hips.hearstapps.com/hmg-prod/images/wdy050113taco-01-1624540365.jpg)'
+          "url(https://hips.hearstapps.com/hmg-prod/images/wdy050113taco-01-1624540365.jpg)"
         }
-        backgroundSize={'cover'}
-        backgroundPosition={'center center'}
-        alignContent={'flex-end'}
+        backgroundSize={"cover"}
+        backgroundPosition={"center center"}
+        alignContent={"flex-end"}
         backgroundColor="rgba(0, 128, 128, 0.7)"
-        marginBottom={10}>
+        marginBottom={10}
+      >
         <Flex
-          w={'full'}
-          h={'100'}
-          backgroundSize={'cover'}
-          backgroundPosition={'center center'}
-          alignContent={'flex-end'}
-          backgroundColor="rgba(0, 128, 128, 0.7)">
-          <VStack w={'full'} px={useBreakpointValue({base: 4, md: 8})}>
-            <Stack maxW={'2xl'} spacing={6}>
+          w={"full"}
+          h={"100"}
+          backgroundSize={"cover"}
+          backgroundPosition={"center center"}
+          alignContent={"flex-end"}
+          backgroundColor="rgba(0, 128, 128, 0.7)"
+        >
+          <VStack w={"full"} px={useBreakpointValue({ base: 4, md: 8 })}>
+            <Stack maxW={"2xl"} spacing={6}>
               <Text textAlign="center" fontSize="6xl" as="b" color="white">
                 Create My Recipe
               </Text>
@@ -923,14 +937,16 @@ export default function Multistep() {
           p={6}
           m="10px auto"
           as="form"
-          marginBottom={180}>
+          marginBottom={180}
+        >
           <Progress
             hasStripe
             colorScheme="red"
             value={progress}
             mb="5%"
             mx="5%"
-            isAnimated></Progress>
+            isAnimated
+          ></Progress>
           {step === 1 ? <Form1 /> : step === 2 ? <Form2 /> : <Form3 />}
           <ButtonGroup mt="5%" w="100%">
             <Flex w="100%" justifyContent="space-between">
@@ -947,17 +963,17 @@ export default function Multistep() {
                       colorScheme="teal"
                       variant="solid"
                       w="7rem"
-                      mr="5%">
+                      mr="5%"
+                    >
                       Back
                     </Button>
                     <Button
                       w="7rem"
-                      isDisabled={
-                        step === 3 ||
-                        (step === 1 &&
-                          window.localStorage.getItem('RECIPENAME') ===
-                            (null || ''))
-                      }
+                      // isDisabled={
+                      //   step === 3 ||
+                      //   (step === 1 &&
+                      //     window.localStorage.getItem("RECIPENAME") === null))
+                      // }
                       onClick={() => {
                         // keep track of the step and progress on the next
                         setStep(step + 1);
@@ -966,10 +982,11 @@ export default function Multistep() {
                         } else {
                           setProgress(progress + 33.33);
                         }
-                        console.log(window.localStorage.getItem('RECIPENAME'));
+                        console.log(window.localStorage.getItem("RECIPENAME"));
                       }}
                       colorScheme="teal"
-                      variant="outline">
+                      variant="outline"
+                    >
                       Next
                     </Button>
                   </HStack>
@@ -989,13 +1006,13 @@ export default function Multistep() {
                     isDisabled={recipeHasName()}
                     onClick={() => {
                       const instructionsStorage: any =
-                        window.localStorage.getItem('INSTRUCTIONS');
+                        window.localStorage.getItem("INSTRUCTIONS");
                       const instructions = JSON.parse(instructionsStorage);
                       // toast for popup
                       toast({
-                        title: 'Recipe created.',
+                        title: "Recipe created.",
                         description: "We've created your recipe for you.",
-                        status: 'success',
+                        status: "success",
                         duration: 3000,
                         isClosable: true,
                       });
@@ -1011,21 +1028,22 @@ export default function Multistep() {
                         false,
                         ingredients,
                         instructions,
-                        JSON.parse(localStorage.getItem('FILE') as string),
+                        JSON.parse(localStorage.getItem("FILE") as string)
                       );
                       // remove EVERYTHING from localstorage
-                      window.localStorage.removeItem('RECIPENAME');
-                      window.localStorage.removeItem('COOKINGTIME');
-                      window.localStorage.removeItem('DIFFICULTY');
-                      window.localStorage.removeItem('APPLIANCES');
-                      window.localStorage.removeItem('COST');
-                      window.localStorage.removeItem('ALLERGENS');
-                      window.localStorage.removeItem('SERVINGS');
-                      window.localStorage.removeItem('INSTRUCTIONS');
-                      window.localStorage.removeItem('INGREDIENTSTRING');
-                      window.localStorage.removeItem('INGREDIENTCOUNT');
-                      window.localStorage.removeItem('FILE');
-                    }}>
+                      window.localStorage.removeItem("RECIPENAME");
+                      window.localStorage.removeItem("COOKINGTIME");
+                      window.localStorage.removeItem("DIFFICULTY");
+                      window.localStorage.removeItem("APPLIANCES");
+                      window.localStorage.removeItem("COST");
+                      window.localStorage.removeItem("ALLERGENS");
+                      window.localStorage.removeItem("SERVINGS");
+                      window.localStorage.removeItem("INSTRUCTIONS");
+                      window.localStorage.removeItem("INGREDIENTSTRING");
+                      window.localStorage.removeItem("INGREDIENTCOUNT");
+                      window.localStorage.removeItem("FILE");
+                    }}
+                  >
                     Submit
                   </Button>
                 </Link>

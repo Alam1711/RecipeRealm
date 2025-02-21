@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from "react";
 import {
   Flex,
   Box,
@@ -13,54 +13,48 @@ import {
   InputGroup,
   InputRightElement,
   useToast,
-} from '@chakra-ui/react';
-import {signInWithEmailAndPassword} from 'firebase/auth';
-import {auth} from '../../firebaseConfig';
-import {Link} from 'react-router-dom';
-import {useNavigate} from 'react-router-dom';
-import LoginNavbar from '../../components/LoginNav';
+} from "@chakra-ui/react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../authentication/firebaseConfig";
+import { Link, useNavigate } from "react-router-dom";
+import LoginNavbar from "../../components/HeaderFooters/LoginNav";
+import { Formik, Form, Field } from "formik";
+import { setEmail } from "../../redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
-/**
- * Function to login in to website
- * @returns
- */
 const Login = () => {
   useEffect(() => {
-    localStorage.removeItem('EMAIL');
+    localStorage.removeItem("EMAIL");
   }, []);
-  const [email, setEmail] = useState('');
-  //establishes email in the database
-  const [password, setPassword] = useState('');
-  //establishes the password in the database
-  const [show, setShow] = React.useState(false);
-  //allows the option to view password
-  const handleClick = () => setShow(!show);
+
+  const [show, setShow] = useState(false);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
-  /**
-   * controls for to allow fo rsign in authorization
-   * @param e
-   */
-  const signIn = (e: React.FormEvent) => {
-    e.preventDefault(); // doesnt reload page
-    signInWithEmailAndPassword(auth, email, password)
-      //method that passes in established values to login to website
-      .then(userCredential => {
-        const user = userCredential.user;
 
+  const initialValues = {
+    email: "",
+    password: "",
+  };
+
+  const signIn = (values: { email: string; password: string }) => {
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .then((userCredential) => {
+        const user = userCredential.user;
         localStorage.clear();
-        localStorage.setItem('EMAIL', JSON.stringify(email));
-        console.log(user);
+        localStorage.setItem("EMAIL", JSON.stringify(values.email));
+        //set email from auth slice
+
+        dispatch(setEmail(values.email));
         if (user.email !== null) {
-          navigate('../recipes');
+          navigate("../recipes");
         }
       })
-      .catch(e => {
+      .catch((e) => {
         toast({
-          //
-          title: 'Incorrect Information',
-          description: 'We could not validate your information',
-          status: 'error',
+          title: "Incorrect Information",
+          description: "We could not validate your information",
+          status: "error",
           duration: 3000,
           isClosable: true,
         });
@@ -69,25 +63,25 @@ const Login = () => {
 
   return (
     <>
-      {/* //Navbar */}
       <LoginNavbar />
       <Flex
         minH="100vh"
         align="center"
         justify="center"
         direction="column"
-        backgroundColor={'#D3D3D3'}
+        backgroundColor={"#D3D3D3"}
         backgroundImage={
-          'url(https://hips.hearstapps.com/hmg-prod/images/wdy050113taco-01-1624540365.jpg)'
-        }>
-          {/* //Logo this is the logo for the site */}
+          "url(https://hips.hearstapps.com/hmg-prod/images/wdy050113taco-01-1624540365.jpg)"
+        }
+      >
         <Box
           boxShadow="dark-lg"
           backgroundColor="white"
           p={8}
           borderWidth={2}
           borderRadius={15}
-          bg="primary.50">
+          bg="primary.50"
+        >
           <Center>
             <Image
               borderRadius="30px"
@@ -98,68 +92,86 @@ const Login = () => {
             />
           </Center>
           <Center>
-            {/* //Log in title */}
             <Text as="b" fontSize={30} marginBottom={4}>
               Login below to start your experience!
             </Text>
           </Center>
-          <form onSubmit={signIn}>
-            {/* //Email input */}
-            <Input
-              placeholder="Email"
-              value={email.toLowerCase()}
-              onChange={e => setEmail(e.target.value)}
-              variant="filled"
-              mb={4}
-            />
-            {/* //Password input */}
-            <InputGroup size="md">
-              <Input
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                variant="filled"
-                mb={6}
-                type={show ? 'text' : 'password'}
-                placeholder="Enter password"
-              />
-              {/* //showing button */}
-              <InputRightElement width="4.5rem">
-                <Button h="1.75rem" size="sm" onClick={handleClick}>
-                  {show ? 'Hide' : 'Show'}
-                </Button>
-              </InputRightElement>
-            </InputGroup>
-
-            <Flex>
-              <Link to="/signup">
-                <Button
-                  color="teal"
-                  colorScheme="white"
-                  size="lg"
-                  variant="outline">
-                  <Text color="teal">Sign up</Text>
-                </Button>
-              </Link>
-
-              <Spacer />
-
-              <Link to="/Recipes">
-                <Button colorScheme="teal" size="lg" onClick={signIn}>
-                  Login
-                </Button>
-              </Link>
-            </Flex>
-          </form>
+          <Formik
+            initialValues={initialValues}
+            onSubmit={(values, actions) => {
+              signIn(values);
+              actions.setSubmitting(false);
+            }}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <Field name="email">
+                  {({ field }: { field: any }) => (
+                    <Input
+                      {...field}
+                      placeholder="Email"
+                      variant="filled"
+                      mb={4}
+                    />
+                  )}
+                </Field>
+                <InputGroup size="md">
+                  <Field name="password">
+                    {({ field }: { field: any }) => (
+                      <Input
+                        {...field}
+                        variant="filled"
+                        mb={6}
+                        type={show ? "text" : "password"}
+                        placeholder="Enter password"
+                      />
+                    )}
+                  </Field>
+                  <InputRightElement width="4.5rem">
+                    <Button
+                      h="1.75rem"
+                      size="sm"
+                      onClick={() => setShow(!show)}
+                    >
+                      {show ? "Hide" : "Show"}
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
+                <Flex>
+                  <Link to="/signup">
+                    <Button
+                      color="teal"
+                      colorScheme="white"
+                      size="lg"
+                      variant="outline"
+                    >
+                      <Text color="teal">Sign up</Text>
+                    </Button>
+                  </Link>
+                  <Spacer />
+                  <Button
+                    colorScheme="teal"
+                    size="lg"
+                    type="submit"
+                    isLoading={isSubmitting}
+                  >
+                    Login
+                  </Button>
+                </Flex>
+              </Form>
+            )}
+          </Formik>
         </Box>
       </Flex>
       <Stack
-        bg={useColorModeValue('gray.50', 'gray.800')}
+        bg={useColorModeValue("gray.50", "gray.800")}
         py={16}
         px={8}
-        spacing={{base: 8, md: 10}}
-        align={'center'}
-        direction={'column'}>
-        <Box textAlign={'center'}></Box>
+        spacing={{ base: 8, md: 10 }}
+        align={"center"}
+        direction={"column"}
+      >
+        <Box textAlign={"center"}></Box>
       </Stack>
     </>
   );
